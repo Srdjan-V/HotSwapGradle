@@ -4,10 +4,29 @@
  * This generated file contains a sample Gradle plugin project to get you started.
  * For more details on writing Custom Plugins, please refer to https://docs.gradle.org/8.5/userguide/custom_plugins.html in the Gradle documentation.
  */
+//import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
+    //id 'com.github.johnrengelman.shadow' version '8.1.1'
     // Apply the Java Gradle plugin development plugin to add support for developing Gradle plugins
     id 'java-gradle-plugin'
+    id 'maven-publish'
+}
+
+version = "0.1.0"
+group = "io.github.srdjan-v"
+
+afterEvaluate {
+    tasks.named('jar', Jar) {
+        from(project(":dcevm-detect").sourceSets.main.output)
+    }
+    tasks.named('sourcesJar', Jar) {
+        from(project(":dcevm-detect").sourceSets.main.allJava)
+    }
+}
+
+java {
+    withSourcesJar()
 }
 
 repositories {
@@ -16,6 +35,27 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":dcevm-detect"))
+    //enables java 17 features on java 8
+    String jabelPlugin = 'com.github.bsideup.jabel:jabel-javac-plugin:1.0.0'
+    String jna = 'net.java.dev.jna:jna-platform:5.13.0'
+    compileOnly 'com.github.bsideup.jabel:jabel-javac-plugin:1.0.0'
+
+    annotationProcessor jabelPlugin
+    annotationProcessor jna
+    testAnnotationProcessor jabelPlugin
+    testImplementation jabelPlugin
+    testAnnotationProcessor jna
+
+
+    implementation 'org.jetbrains:annotations:24.0.1'
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'com.google.guava:guava:31.1-jre'
+
+    implementation "org.apache.httpcomponents:httpclient:4.5.14"
+    implementation 'org.apache.commons:commons-lang3:3.14.0'
+
+
     // Use JUnit Jupiter for testing.
     testImplementation libs.junit.jupiter
 
@@ -23,14 +63,44 @@ dependencies {
 }
 
 gradlePlugin {
-    // Define the plugin
     plugins {
-        greeting {
-            id = 'io.github.srdjanv.hotswapgradle'
+        hotSwapGradle {
+            id = 'io.github.srdjan-v.hotswap-gradle'
             implementationClass = 'io.github.srdjanv.hotswapgradle.HotSwapGradlePlugin'
         }
     }
 }
+
+configure([tasks.compileJava, tasks.compileTestJava]) {
+    sourceCompatibility = 17 // for the IDE support
+    options.release = 8
+
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+configure([tasks.javadoc]) {
+    javadocTool.set(javaToolchains.javadocToolFor {
+        languageVersion = JavaLanguageVersion.of(17)
+    })
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    javaLauncher.set(javaToolchains.launcherFor() {
+        languageVersion = JavaLanguageVersion.of(8)
+    })
+}
+
+publishing {
+    publications {
+        pluginMaven(MavenPublication) {
+            artifactId = 'hotswap-gradle'
+        }
+    }
+}
+
 
 // Add a source set for the functional test suite
 sourceSets {
