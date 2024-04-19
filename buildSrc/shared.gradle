@@ -1,0 +1,42 @@
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+    withSourcesJar()
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    //enables java 21 features on java 8
+    //change back to 'com.github.bsideup.jabel' once this gets resolved https://github.com/bsideup/jabel/issues/182
+    String jabelPlugin = 'com.pkware.jabel:jabel-javac-plugin:1.0.1-1'
+    compileOnly 'com.pkware.jabel:jabel-javac-plugin:1.0.1-1'
+
+    annotationProcessor jabelPlugin
+    testAnnotationProcessor jabelPlugin
+    testImplementation jabelPlugin
+}
+
+configure([tasks.compileJava, tasks.compileTestJava]) {
+    sourceCompatibility = 21 // for the IDE support
+    options.release = 8
+
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+configure([tasks.javadoc]) {
+    javadocTool = javaToolchains.javadocToolFor {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+tasks.named('test', Test) {
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
