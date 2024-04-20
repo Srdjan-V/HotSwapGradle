@@ -2,6 +2,8 @@ plugins {
     id("com.diffplug.spotless")
 }
 spotless {
+    ratchetFrom('origin/master')
+
     format 'misc', {
         // define the files to apply `misc` to
         target '*.gradle', '.gitattributes', '.gitignore'
