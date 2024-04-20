@@ -1,12 +1,14 @@
 plugins {
     id 'java-gradle-plugin'
     id 'maven-publish'
+    id("java-conventions")
+    id("jebel-conventions")
+    id("spotless-conventions")
 }
 
 version = "0.1.0"
 group = "io.github.srdjan-v"
 
-apply from: rootProject.file('buildSrc/shared.gradle')
 
 afterEvaluate {
     tasks.named('jar', Jar) {

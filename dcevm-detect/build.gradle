@@ -1,10 +1,9 @@
 plugins {
-    id 'java'
     id 'idea'
+    id("java-conventions")
+    id("jebel-conventions")
+    id("spotless-conventions")
 }
-
-apply from: rootProject.file('buildSrc/shared.gradle')
-
 
 //Source code
 //https://github.com/dcevm/dcevm/tree/93890b30437f7476824df90f8e9646c391440c31/installer
