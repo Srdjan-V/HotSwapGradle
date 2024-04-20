@@ -53,17 +53,19 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
         Map<JavaVersion, List<Path>> resolvedDcevmRegistry = new HashMap<>();
         try {
             String text = FileUtils.loadTextFromFile(registryPath);
-            Map<JavaVersion, List<File>> dcevmRegistry = null;
+            Map<JavaVersion, List<String>> dcevmRegistry = null;
             try {
-                dcevmRegistry =  gson.fromJson(text, new TypeToken<Map<JavaVersion, File>>() {}.getType());
-            } catch (JsonParseException ignore) {}
+                dcevmRegistry = gson.fromJson(text, new TypeToken<Map<JavaVersion, String>>() {}.getType());
+            } catch (JsonParseException ignore) {
+            }
 
             if (dcevmRegistry != null) {
-                for (Map.Entry<JavaVersion, List<File>> entry : dcevmRegistry.entrySet()) {
+                for (Map.Entry<JavaVersion, List<String>> entry : dcevmRegistry.entrySet()) {
                     if (entry.getValue() == null || entry.getValue().isEmpty()) continue;
                     JavaVersion javaVersion = entry.getKey();
                     List<Path> dcevmPaths = entry.getValue()
                             .stream()
+                            .map(File::new)
                             .map(File::toPath)
                             .filter(validator::validateDcevm)
                             .collect(Collectors.toList());
@@ -82,14 +84,16 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
         lock.lock();
         try {
             if (!regDirty && !initialized && !modified) return;
-            Map<JavaVersion, List<File>> data = new HashMap<>();
+            Map<JavaVersion, List<String>> data = new HashMap<>();
 
             if (initialized) {
                 for (Map.Entry<JavaVersion, List<Path>> entry : dcevmRegistry.get().entrySet()) {
-                    List<File> paths = entry
+                    List<String> paths = entry
                             .getValue()
                             .stream()
-                            .map(path -> path.normalize().toAbsolutePath().toFile())
+                            .map(path -> path.normalize().toAbsolutePath())
+                            .map(Path::toFile)
+                            .map(File::toString)
                             .collect(Collectors.toList());
                     data.put(entry.getKey(), paths);
                 }
@@ -103,14 +107,16 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
                                         Collectors.toList())
                         ));
                 for (Map.Entry<JavaVersion, List<Path>> entry : metaData.entrySet()) {
-                    List<File> normalizedPaths = entry
+                    List<String> normalizedPaths = entry
                             .getValue()
                             .stream()
-                            .map(path -> path.normalize().toAbsolutePath().toFile())
+                            .map(path -> path.normalize().toAbsolutePath())
+                            .map(Path::toFile)
+                            .map(File::toString)
                             .collect(Collectors.toList());
 
                     data.merge(entry.getKey(), normalizedPaths, (path1, path2) -> {
-                        List<File> dataList = new ArrayList<>();
+                        List<String> dataList = new ArrayList<>();
                         dataList.addAll(path1);
                         dataList.addAll(path2);
                         return dataList;
