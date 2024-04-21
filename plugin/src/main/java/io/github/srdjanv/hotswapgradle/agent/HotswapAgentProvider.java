@@ -24,16 +24,23 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.gradle.api.file.DirectoryProperty;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class HotSwapAgentProvider {
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+public class HotswapAgentProvider {
+    private final Logger logger = LoggerFactory.getLogger(HotswapAgentProvider.class);
+    private final Gson gson;
     private final ExecutorService downloader = Executors.newFixedThreadPool(2);
     private final Future<Path> latestStable;
     private final String agentReleaseApiUrl;
     private final Future<List<GithubApiReleaseSchema>> agentsManifest;
     private final Path agentsDir;
 
-    public HotSwapAgentProvider(String agentReleaseApiUrl, DirectoryProperty workingDirectory) {
+    public HotswapAgentProvider(String agentReleaseApiUrl, DirectoryProperty workingDirectory) {
+        gson = new GsonBuilder()
+                // .setPrettyPrinting() todo add when debugging
+                .create();
+
         this.agentReleaseApiUrl = agentReleaseApiUrl;
         this.agentsDir = FileUtils.agentDir(workingDirectory).getAsFile().toPath();
         FileIOUtils.createDirs(agentsDir);
@@ -45,11 +52,11 @@ public class HotSwapAgentProvider {
         return latestStable;
     }
 
-    public Path requestAgent(DcevmSpec dcevmSpec) {
-        var agentType = dcevmSpec.getAgentType().get();
-        var snapshot = dcevmSpec.getUseSnapshot();
-        String gitTag = dcevmSpec.getGitTagName().getOrNull();
-        var config = new DownloadConfig(AgentType.valueOf(agentType.toUpperCase()), snapshot.get(), gitTag);
+    public Path getAgent(DcevmSpec dcevmSpec) {
+        return getAgent(resolverDownloadConfig(dcevmSpec));
+    }
+
+    public Path getAgent(DownloadConfig config) {
         try {
             return requestAgent(config).get(10, TimeUnit.MINUTES);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
@@ -57,7 +64,12 @@ public class HotSwapAgentProvider {
         }
     }
 
+    public Future<Path> requestAgent(DcevmSpec dcevmSpec) {
+        return requestAgent(resolverDownloadConfig(dcevmSpec));
+    }
+
     public Future<Path> requestAgent(DownloadConfig config) {
+        logger.debug("Requesting agent {}", config);
         return downloader.submit(() -> {
             GithubApiReleaseSchema releaseSchema = getReleaseSchema(config);
             GithubApiAssetsSchema assetsSchema = getAssetSchema(releaseSchema, config);
@@ -65,6 +77,13 @@ public class HotSwapAgentProvider {
             if (local != null) return local;
             return doDownload(assetsSchema);
         });
+    }
+
+    private DownloadConfig resolverDownloadConfig(DcevmSpec dcevmSpec) {
+        var agentType = dcevmSpec.getAgentType().get();
+        var snapshot = dcevmSpec.getUseSnapshot();
+        String gitTag = dcevmSpec.getGitTagName().getOrNull();
+        return new DownloadConfig(AgentType.valueOf(agentType.toUpperCase()), snapshot.get(), gitTag);
     }
 
     private GithubApiAssetsSchema getAssetSchema(GithubApiReleaseSchema releaseSchema, DownloadConfig config) {
@@ -118,8 +137,7 @@ public class HotSwapAgentProvider {
                 }
                 success = true;
             } catch (IOException e) {
-                // todo
-                e.printStackTrace();
+                logger.error("Download failed {} {}", errors, e);
             }
         }
         if (!success) throw new DownloadException(String.format("Agent download failed, Path: %s", downloadPath));
@@ -154,29 +172,29 @@ public class HotSwapAgentProvider {
         };
     }
 
-    private static void saveAgentsManifest(
-            Gson gson, DirectoryProperty workingDir, List<GithubApiReleaseSchema> manifest) {
+    private void saveAgentsManifest(Gson gson, DirectoryProperty workingDir, List<GithubApiReleaseSchema> manifest) {
         try {
             var text = gson.toJson(manifest);
             FileIOUtils.saveStringToFile(text, FileUtils.agentVersion(workingDir));
         } catch (JsonParseException | UncheckedIOException exception) {
-            exception.printStackTrace();
+            logger.error("Unable to save agents manifest", exception);
         }
     }
 
-    private static List<GithubApiReleaseSchema> loadAgentsManifest(Gson gson, DirectoryProperty workingDir) {
+    private List<GithubApiReleaseSchema> loadAgentsManifest(Gson gson, DirectoryProperty workingDir) {
         List<GithubApiReleaseSchema> agents = Collections.emptyList();
         try {
             var rawAgents = FileIOUtils.loadTextFromFile(FileUtils.agentVersion(workingDir));
             agents = gson.fromJson(rawAgents, new TypeToken<List<GithubApiReleaseSchema>>() {}.getType());
-        } catch (JsonParseException | UncheckedIOException ignored) {
+        } catch (JsonParseException | UncheckedIOException e) {
+            logger.debug("Unable to load agents manifest", e);
         } finally {
             if (agents == null) agents = Collections.emptyList();
         }
         return agents;
     }
 
-    private static List<GithubApiReleaseSchema> downloadRemoteAgentsManifest(Gson gson, String agentReleaseApiUrl) {
+    private List<GithubApiReleaseSchema> downloadRemoteAgentsManifest(Gson gson, String agentReleaseApiUrl) {
         List<GithubApiReleaseSchema> agentsManifest = Collections.emptyList();
         try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
             var getMethod = new HttpGet(agentReleaseApiUrl);
@@ -185,8 +203,7 @@ public class HotSwapAgentProvider {
                     new JsonReader(new InputStreamReader(response.getEntity().getContent())),
                     new TypeToken<List<GithubApiReleaseSchema>>() {}.getType());
         } catch (IOException e) {
-            System.err.printf("Couldn't load the release URL: %s%n", agentsManifest);
-            e.printStackTrace();
+            logger.error("Couldn't load the release URL: {}", agentsManifest, e);
         } finally {
             if (agentsManifest == null) agentsManifest = Collections.emptyList();
         }

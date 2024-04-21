@@ -1,6 +1,6 @@
 package io.github.srdjanv.hotswapgradle;
 
-import io.github.srdjanv.hotswapgradle.agent.HotSwapAgentProvider;
+import io.github.srdjanv.hotswapgradle.agent.HotswapAgentProvider;
 import io.github.srdjanv.hotswapgradle.dcevmdetection.legacy.LegacyDcevmDetection;
 import io.github.srdjanv.hotswapgradle.registry.ICashedJVMRegistry;
 import io.github.srdjanv.hotswapgradle.registry.IKnownDcevmRegistry;
@@ -24,13 +24,13 @@ public abstract class HotswapGradleService
         // todo offline mode
     }
 
-    private final HotSwapAgentProvider downloader;
+    private final HotswapAgentProvider downloader;
     private final IKnownDcevmRegistry knownDCEVMRegistry;
     private final ICashedJVMRegistry cashedJVMRegistry;
     private final ILocalJVMRegistry localJVMRegistry;
 
     public HotswapGradleService() {
-        downloader = new HotSwapAgentProvider(
+        downloader = new HotswapAgentProvider(
                 Constants.AGENT_RELEASE_API_URL, getParameters().getWorkingDirectory());
         knownDCEVMRegistry = new KnownDcevmRegistry(this);
         cashedJVMRegistry = new CashedJVMRegistry(
@@ -39,7 +39,7 @@ public abstract class HotswapGradleService
         localJVMRegistry = new LocalJVMRegistry(cashedJVMRegistry);
     }
 
-    public HotSwapAgentProvider getAgentProvider() {
+    public HotswapAgentProvider getAgentProvider() {
         return downloader;
     }
 

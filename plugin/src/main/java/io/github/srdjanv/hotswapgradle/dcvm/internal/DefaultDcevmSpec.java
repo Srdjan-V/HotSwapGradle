@@ -50,7 +50,7 @@ public class DefaultDcevmSpec extends DefaultToolchainSpec implements DcevmSpec 
         agentJar = objectFactory
                 .fileProperty()
                 .convention(projectLayout.file(providerFactory.provider(
-                        () -> provider.getAgentProvider().requestAgent(this).toFile())));
+                        () -> provider.getAgentProvider().getAgent(this).toFile())));
 
         arguments = objectFactory.listProperty(String.class).convention(providerFactory.provider(() -> {
             var meta = getDcevmMetadata().getOrNull();
