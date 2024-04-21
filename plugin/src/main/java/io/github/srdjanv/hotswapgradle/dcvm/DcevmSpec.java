@@ -42,7 +42,8 @@ public interface DcevmSpec extends JavaToolchainSpec {
 
     /**
      * Can set custom launch arguments. <p> Example:
-     * <pre> {@code
+     * <pre>
+     * {@code
      *  getArguments().set(providerFactory.provider(() -> {
      *      var meta = getDcevmMetadata().getOrNull();
      *      if (meta != null && meta.getIsDcevmInstalledLikeAltJvm().get())
@@ -53,6 +54,8 @@ public interface DcevmSpec extends JavaToolchainSpec {
      *      return Collections.singletonList(String.format("-javaagent:%s",
      *          getAgentJar().get().getAsFile().getAbsolutePath()));
      * }))
+     * }
+     * </pre>
      */
     ListProperty<String> getArguments();
 
