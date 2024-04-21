@@ -1,18 +1,12 @@
 package io.github.srdjanv.hotswapgradle.registry.internal;
 
-import io.github.srdjanv.hotswapgradle.HotSwapGradleService;
+import io.github.srdjanv.hotswapgradle.HotswapGradleService;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmSpec;
-import io.github.srdjanv.hotswapgradle.suppliers.KnownDcevmSupplier;
 import io.github.srdjanv.hotswapgradle.registry.IKnownDcevmRegistry;
-import io.github.srdjanv.hotswapgradle.resolver.ILauncherResolver;
 import io.github.srdjanv.hotswapgradle.resolver.IDcevmSpecResolver;
+import io.github.srdjanv.hotswapgradle.resolver.ILauncherResolver;
+import io.github.srdjanv.hotswapgradle.suppliers.KnownDcevmSupplier;
 import io.github.srdjanv.hotswapgradle.util.JavaUtil;
-import org.gradle.api.Action;
-import org.gradle.api.GradleException;
-import org.gradle.api.JavaVersion;
-import org.gradle.jvm.toolchain.JavaLauncher;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,18 +14,24 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import org.gradle.api.Action;
+import org.gradle.api.GradleException;
+import org.gradle.api.JavaVersion;
+import org.gradle.jvm.toolchain.JavaLauncher;
+import org.jetbrains.annotations.Nullable;
 
 public class KnownDcevmRegistry implements IKnownDcevmRegistry {
     private final Lock lock = new ReentrantLock();
-    private final HotSwapGradleService hotSwapGradleService;
+    private final HotswapGradleService hotSwapGradleService;
     private final Map<JavaVersion, List<Action<? super DcevmSpec>>> dcevmRegistry = new HashMap<>();
 
-    public KnownDcevmRegistry(HotSwapGradleService hotSwapGradleService) {
+    public KnownDcevmRegistry(HotswapGradleService hotSwapGradleService) {
         this.hotSwapGradleService = hotSwapGradleService;
         setDefaultRegistry();
     }
 
-    @Override public void setDefaultRegistry() {
+    @Override
+    public void setDefaultRegistry() {
         try {
             lock.lock();
             IKnownDcevmRegistry.super.setDefaultRegistry();
@@ -43,7 +43,8 @@ public class KnownDcevmRegistry implements IKnownDcevmRegistry {
     public void populateRegistry(JavaVersion javaVersion, KnownDcevmSupplier knownDCEVMSupplier) {
         lock.lock();
         try {
-            List<Action<? super DcevmSpec>> dcvmList = dcevmRegistry.computeIfAbsent(javaVersion, k -> new ArrayList<>());
+            List<Action<? super DcevmSpec>> dcvmList =
+                    dcevmRegistry.computeIfAbsent(javaVersion, k -> new ArrayList<>());
             dcvmList.addAll(knownDCEVMSupplier.getKnownDCEVMs());
         } finally {
             lock.unlock();
@@ -59,7 +60,9 @@ public class KnownDcevmRegistry implements IKnownDcevmRegistry {
         }
     }
 
-    @Override public @Nullable JavaLauncher locateVM(ILauncherResolver launcherResolver, IDcevmSpecResolver specResolver, DcevmSpec dcevmSpec) {
+    @Override
+    public @Nullable JavaLauncher locateVM(
+            ILauncherResolver launcherResolver, IDcevmSpecResolver specResolver, DcevmSpec dcevmSpec) {
         JavaLauncher javaLauncher = null;
         lock.lock();
         try {

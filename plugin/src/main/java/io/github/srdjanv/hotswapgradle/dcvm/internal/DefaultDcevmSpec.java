@@ -1,6 +1,6 @@
 package io.github.srdjanv.hotswapgradle.dcvm.internal;
 
-import io.github.srdjanv.hotswapgradle.HotSwapGradleService;
+import io.github.srdjanv.hotswapgradle.HotswapGradleService;
 import io.github.srdjanv.hotswapgradle.agent.AgentType;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmMetadata;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmSpec;
@@ -36,7 +36,7 @@ public class DefaultDcevmSpec extends DefaultToolchainSpec implements DcevmSpec 
             ProviderFactory providerFactory,
             ProjectLayout projectLayout,
             Project project,
-            HotSwapGradleService provider) {
+            HotswapGradleService provider) {
         super(objectFactory);
 
         var java = JavaUtil.getJavaPluginExtension(project);

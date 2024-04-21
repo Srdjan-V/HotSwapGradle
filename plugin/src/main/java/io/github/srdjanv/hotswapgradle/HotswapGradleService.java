@@ -17,8 +17,8 @@ import org.gradle.tooling.events.FinishEvent;
 import org.gradle.tooling.events.OperationCompletionListener;
 import org.gradle.tooling.events.task.TaskFinishEvent;
 
-public abstract class HotSwapGradleService
-        implements BuildService<HotSwapGradleService.HotSwapParameters>, OperationCompletionListener {
+public abstract class HotswapGradleService
+        implements BuildService<HotswapGradleService.HotSwapParameters>, OperationCompletionListener {
     public interface HotSwapParameters extends BuildServiceParameters {
         DirectoryProperty getWorkingDirectory();
         // todo offline mode
@@ -29,7 +29,7 @@ public abstract class HotSwapGradleService
     private final ICashedJVMRegistry cashedJVMRegistry;
     private final ILocalJVMRegistry localJVMRegistry;
 
-    public HotSwapGradleService() {
+    public HotswapGradleService() {
         downloader = new HotSwapAgentProvider(
                 Constants.AGENT_RELEASE_API_URL, getParameters().getWorkingDirectory());
         knownDCEVMRegistry = new KnownDcevmRegistry(this);

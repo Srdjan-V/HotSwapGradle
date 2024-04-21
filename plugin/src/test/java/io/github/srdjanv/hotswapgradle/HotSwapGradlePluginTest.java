@@ -3,19 +3,21 @@
  */
 package io.github.srdjanv.hotswapgradle;
 
-import org.gradle.api.UnknownDomainObjectException;
-import org.gradle.testfixtures.ProjectBuilder;
-import org.gradle.api.Project;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.ThrowingSupplier;
-
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.gradle.api.Project;
+import org.gradle.testfixtures.ProjectBuilder;
+import org.junit.jupiter.api.Test;
+
 class HotSwapGradlePluginTest {
-    @Test void pluginRegistersATask() {
+    @Test
+    void pluginRegistersATask() {
         Project project = ProjectBuilder.builder().build();
         project.getPlugins().apply("io.github.srdjan-v.hotswap-gradle");
 
-        assertDoesNotThrow(() -> project.getGradle().getSharedServices().getRegistrations().getByName(HotSwapGradleService.class.getName()));
+        assertDoesNotThrow(() -> project.getGradle()
+                .getSharedServices()
+                .getRegistrations()
+                .getByName(HotswapGradleService.class.getName()));
     }
 }

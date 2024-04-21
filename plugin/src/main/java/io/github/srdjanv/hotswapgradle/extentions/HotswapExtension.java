@@ -1,7 +1,7 @@
 package io.github.srdjanv.hotswapgradle.extentions;
 
 import groovy.lang.GroovyObjectSupport;
-import io.github.srdjanv.hotswapgradle.HotSwapGradleService;
+import io.github.srdjanv.hotswapgradle.HotswapGradleService;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmSpec;
 import io.github.srdjanv.hotswapgradle.resolver.*;
 import javax.inject.Inject;
@@ -14,21 +14,23 @@ import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.toolchain.*;
 
-public abstract class HotSwapExtension extends GroovyObjectSupport {
+public abstract class HotswapExtension extends GroovyObjectSupport {
+    public static final String NAME = "hotswapProvider";
+
     private final Project project;
-    private final Provider<HotSwapGradleService> hotSwapGradleService;
+    private final Provider<HotswapGradleService> hotswapGradleService;
 
     @Inject
-    public HotSwapExtension(Project project) {
+    public HotswapExtension(Project project) {
         this.project = project;
         project.getPlugins().apply(JavaBasePlugin.class);
 
         BuildServiceRegistration<?, ?> serviceRegistration = project.getGradle()
                 .getSharedServices()
                 .getRegistrations()
-                .getByName(HotSwapGradleService.class.getName());
+                .getByName(HotswapGradleService.class.getName());
         //noinspection unchecked
-        hotSwapGradleService = (Provider<HotSwapGradleService>) serviceRegistration.getService();
+        hotswapGradleService = (Provider<HotswapGradleService>) serviceRegistration.getService();
     }
 
     public void configureTask(TaskProvider<? extends JavaExec> taskProvider) {
@@ -67,7 +69,7 @@ public abstract class HotSwapExtension extends GroovyObjectSupport {
             IJVMResolver jvmResolver,
             Action<? super DcevmSpec> spec) {
         task.getJavaLauncher().set(project.provider(() -> {
-            var hotswapService = hotSwapGradleService.get();
+            var hotswapService = hotswapGradleService.get();
             var dcevmSpec = specResolver.resolveDcevmSpec(hotswapService, spec);
 
             JavaLauncher javaLauncher =
@@ -88,7 +90,7 @@ public abstract class HotSwapExtension extends GroovyObjectSupport {
         }));
     }
 
-    public Provider<HotSwapGradleService> getHotSwapGradleService() {
-        return hotSwapGradleService;
+    public Provider<HotswapGradleService> getHotswapGradleService() {
+        return hotswapGradleService;
     }
 }

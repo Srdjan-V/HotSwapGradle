@@ -3,30 +3,28 @@
  */
 package io.github.srdjanv.hotswapgradle;
 
-import io.github.srdjanv.hotswapgradle.extentions.HotSwapExtension;
+import io.github.srdjanv.hotswapgradle.extentions.HotswapExtension;
+import javax.inject.Inject;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.initialization.Settings;
-import org.gradle.api.services.BuildServiceRegistry;
 import org.gradle.build.event.BuildEventsListenerRegistry;
 import org.jetbrains.annotations.NotNull;
-
-import javax.inject.Inject;
 
 public abstract class HotSwapGradlePlugin implements Plugin<Project> {
 
     @Inject
     public abstract BuildEventsListenerRegistry getEventsListenerRegistry();
 
-    @Override public void apply(@NotNull Project project) {
-        var serviceProvider = project.getGradle().getSharedServices()
+    @Override
+    public void apply(@NotNull Project project) {
+        var serviceProvider = project.getGradle()
+                .getSharedServices()
                 .registerIfAbsent(
-                        HotSwapGradleService.class.getName(),
-                        HotSwapGradleService.class,
-                        spec -> spec.getParameters().getWorkingDirectory().set(project.getGradle().getGradleUserHomeDir()));
+                        HotswapGradleService.class.getName(), HotswapGradleService.class, spec -> spec.getParameters()
+                                .getWorkingDirectory()
+                                .set(project.getGradle().getGradleUserHomeDir()));
 
         getEventsListenerRegistry().onTaskCompletion(serviceProvider);
-
-        project.getExtensions().create("hotSwap", HotSwapExtension.class);
+        project.getExtensions().create(HotswapExtension.NAME, HotswapExtension.class);
     }
 }
