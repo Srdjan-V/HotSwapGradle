@@ -7,4 +7,5 @@
 
 rootProject.name = 'HotSwapGradle'
 include('plugin')
+project(':plugin').name = 'hotswap-gradle'
 include('dcevm-detect')

@@ -9,7 +9,6 @@ plugins {
 version = "0.1.0"
 group = "io.github.srdjan-v"
 
-
 afterEvaluate {
     tasks.named('jar', Jar) {
         from(project(":dcevm-detect").sourceSets.main.output)
@@ -35,19 +34,13 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-publishing {
-    publications {
-        pluginMaven(MavenPublication) {
-            artifactId = 'hotswap-gradle'
-        }
-    }
-}
-
 gradlePlugin {
     plugins {
         hotSwapGradle {
             id = 'io.github.srdjan-v.hotswap-gradle'
             implementationClass = 'io.github.srdjanv.hotswapgradle.HotswapGradlePlugin'
+            description = "This is an utility plugin to locate Dcevm and download HotswapAgent for individual JavaExec tasks"
+            tags = ["java", "JVM", "DCEVM", "HotswapAgent"]
         }
     }
 }
