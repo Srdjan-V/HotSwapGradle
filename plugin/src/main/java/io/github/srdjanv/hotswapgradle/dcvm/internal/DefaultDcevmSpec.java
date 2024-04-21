@@ -2,9 +2,12 @@ package io.github.srdjanv.hotswapgradle.dcvm.internal;
 
 import io.github.srdjanv.hotswapgradle.HotSwapGradleService;
 import io.github.srdjanv.hotswapgradle.agent.AgentType;
-import io.github.srdjanv.hotswapgradle.dcvm.DcevmSpec;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmMetadata;
+import io.github.srdjanv.hotswapgradle.dcvm.DcevmSpec;
 import io.github.srdjanv.hotswapgradle.util.JavaUtil;
+import java.util.Arrays;
+import java.util.Collections;
+import javax.inject.Inject;
 import org.gradle.api.Project;
 import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.file.RegularFileProperty;
@@ -14,10 +17,6 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.jvm.toolchain.JavaToolchainSpec;
 import org.gradle.jvm.toolchain.internal.DefaultToolchainSpec;
-
-import javax.inject.Inject;
-import java.util.Arrays;
-import java.util.Collections;
 
 public class DefaultDcevmSpec extends DefaultToolchainSpec implements DcevmSpec {
     private final Property<JavaToolchainSpec> fallbackSpeck;
@@ -48,18 +47,21 @@ public class DefaultDcevmSpec extends DefaultToolchainSpec implements DcevmSpec 
         useSnapshot = objectFactory.property(Boolean.class).convention(false);
         gitTagName = objectFactory.property(String.class);
 
-        agentJar = objectFactory.fileProperty()
-                .convention(projectLayout.file(providerFactory.provider(()-> provider.getAgentProvider().requestAgent(this).toFile())));
+        agentJar = objectFactory
+                .fileProperty()
+                .convention(projectLayout.file(providerFactory.provider(
+                        () -> provider.getAgentProvider().requestAgent(this).toFile())));
 
         arguments = objectFactory.listProperty(String.class).convention(providerFactory.provider(() -> {
             var meta = getDcevmMetadata().getOrNull();
             if (meta != null && meta.getIsDcevmInstalledLikeAltJvm().get())
-                return Arrays.asList("-XXaltjvm=dcevm",
-                        String.format("-javaagent:%s",
-                                agentJar.get().getAsFile().getAbsolutePath()));
+                return Arrays.asList(
+                        "-XXaltjvm=dcevm",
+                        String.format(
+                                "-javaagent:%s", agentJar.get().getAsFile().getAbsolutePath()));
 
-            return Collections.singletonList(String.format("-javaagent:%s",
-                    agentJar.get().getAsFile().getAbsolutePath()));
+            return Collections.singletonList(
+                    String.format("-javaagent:%s", agentJar.get().getAsFile().getAbsolutePath()));
         }));
 
         queryKnownDEVMs = objectFactory.property(Boolean.class).convention(true);
@@ -67,44 +69,53 @@ public class DefaultDcevmSpec extends DefaultToolchainSpec implements DcevmSpec 
         queryLocalDEVMs = objectFactory.property(Boolean.class).convention(true);
     }
 
-    @Override public Property<JavaToolchainSpec> getFallbackSpeck() {
+    @Override
+    public Property<JavaToolchainSpec> getFallbackSpeck() {
         return fallbackSpeck;
     }
 
-    @Override public Property<DcevmMetadata> getDcevmMetadata() {
+    @Override
+    public Property<DcevmMetadata> getDcevmMetadata() {
         return dcevmMetadataProvider;
     }
 
-    @Override public Property<String> getAgentType() {
+    @Override
+    public Property<String> getAgentType() {
         return agentType;
     }
 
-    @Override public Property<Boolean> getUseSnapshot() {
+    @Override
+    public Property<Boolean> getUseSnapshot() {
         return useSnapshot;
     }
 
-    @Override public Property<String> getGitTagName() {
+    @Override
+    public Property<String> getGitTagName() {
         return gitTagName;
     }
 
-    @Override public RegularFileProperty getAgentJar() {
+    @Override
+    public RegularFileProperty getAgentJar() {
         return agentJar;
     }
 
-    @Override public ListProperty<String> getArguments() {
+    @Override
+    public ListProperty<String> getArguments() {
         return arguments;
     }
 
-    @Override public Property<Boolean> getQueryKnownDEVMs() {
+    @Override
+    public Property<Boolean> getQueryKnownDEVMs() {
         return queryKnownDEVMs;
     }
 
-    @Override public Property<Boolean> getQueryCachedDEVMs() {
+    @Override
+    public Property<Boolean> getQueryCachedDEVMs() {
         return queryCachedDEVMs;
     }
 
-    @Override public Property<Boolean> getQueryLocalDEVMs() {
+    @Override
+    public Property<Boolean> getQueryLocalDEVMs() {
         return queryLocalDEVMs;
     }
-
 }
