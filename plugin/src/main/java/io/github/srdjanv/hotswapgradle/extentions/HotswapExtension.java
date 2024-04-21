@@ -16,13 +16,10 @@ import org.gradle.jvm.toolchain.*;
 
 public abstract class HotswapExtension extends GroovyObjectSupport {
     public static final String NAME = "hotswapProvider";
-
-    private final Project project;
     private final Provider<HotswapGradleService> hotswapGradleService;
 
     @Inject
     public HotswapExtension(Project project) {
-        this.project = project;
         project.getPlugins().apply(JavaBasePlugin.class);
 
         BuildServiceRegistration<?, ?> serviceRegistration = project.getGradle()
@@ -34,22 +31,19 @@ public abstract class HotswapExtension extends GroovyObjectSupport {
     }
 
     public void configureTask(TaskProvider<? extends JavaExec> taskProvider) {
-        taskProvider.configure(javaExec -> configureTask(javaExec, project, spec -> {}));
+        taskProvider.configure(javaExec -> configureTask(javaExec, spec -> {}));
     }
 
     public void configureTask(TaskProvider<? extends JavaExec> taskProvider, Action<? super DcevmSpec> spec) {
-        taskProvider.configure(javaExec -> configureTask(javaExec, project, spec));
+        taskProvider.configure(javaExec -> configureTask(javaExec, spec));
     }
 
     public void configureTask(JavaExec task) {
-        configureTask(task, project, spec -> {});
+        configureTask(task, spec -> {});
     }
 
     public void configureTask(JavaExec task, Action<? super DcevmSpec> spec) {
-        configureTask(task, project, spec);
-    }
-
-    public void configureTask(JavaExec task, Project project, Action<? super DcevmSpec> spec) {
+        Project project = task.getProject();
         configureTask(
                 task,
                 IDcevmSpecResolver.of(project),
@@ -68,7 +62,7 @@ public abstract class HotswapExtension extends GroovyObjectSupport {
             IDcevmMetadataResolver metadataResolver,
             IJVMResolver jvmResolver,
             Action<? super DcevmSpec> spec) {
-        task.getJavaLauncher().set(project.provider(() -> {
+        task.getJavaLauncher().set(task.getProject().provider(() -> {
             var hotswapService = hotswapGradleService.get();
             var dcevmSpec = specResolver.resolveDcevmSpec(hotswapService, spec);
 
