@@ -1,15 +1,14 @@
 package io.github.srdjanv.hotswapgradle.validator.internal;
 
-import io.github.srdjanv.hotswapgradle.util.DCEVMUtil;
+import io.github.srdjanv.hotswapgradle.dcevmdetection.legacy.LegacyDcevmDetection;
 import io.github.srdjanv.hotswapgradle.validator.DcevmValidator;
-
 import java.nio.file.Path;
 
 public class DefaultDcevmValidator implements DcevmValidator {
-    public DefaultDcevmValidator() {
-    }
+    public DefaultDcevmValidator() {}
 
-    @Override public boolean validateDcevm(Path javaHome) {
-        return DCEVMUtil.isDCEVMPresent(javaHome);
+    @Override
+    public boolean validateDcevm(Path javaHome) {
+        return LegacyDcevmDetection.isPresent(javaHome);
     }
 }

@@ -21,7 +21,7 @@
  * questions.
  *
  */
-package com.github.dcevm.installer;
+package io.github.srdjanv.hotswapgradle.dcevmdetection.legacy;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -43,33 +43,55 @@ import java.util.regex.Pattern;
 public enum ConfigurationInfo {
 
     // Note: 32-bit is not supported on Mac OS X
-    MAC_OS(null, "bsd_amd64_compiler2",
-            "lib/client", "lib/server", "lib/dcevm", "lib/server", "lib/dcevm",
-            "bin/java", "libjvm.dylib") {
+    MAC_OS(
+            null,
+            "bsd_amd64_compiler2",
+            "lib/client",
+            "lib/server",
+            "lib/dcevm",
+            "lib/server",
+            "lib/dcevm",
+            "bin/java",
+            "libjvm.dylib") {
         @Override
         public String[] paths() {
-            return new String[] { "/Library/Java/JavaVirtualMachines/" };
+            return new String[] {"/Library/Java/JavaVirtualMachines/"};
         }
     },
-    LINUX("linux_i486_compiler2", "linux_amd64_compiler2",
-            "lib/i386/client", "lib/i386/server", "lib/i386/dcevm", "lib/amd64/server", "lib/amd64/dcevm",
-            "bin/java", "libjvm.so") {
+    LINUX(
+            "linux_i486_compiler2",
+            "linux_amd64_compiler2",
+            "lib/i386/client",
+            "lib/i386/server",
+            "lib/i386/dcevm",
+            "lib/amd64/server",
+            "lib/amd64/dcevm",
+            "bin/java",
+            "libjvm.so") {
         @Override
         public String[] paths() {
-            return new String[]{"/usr/java", "/usr/lib/jvm"};
+            return new String[] {"/usr/java", "/usr/lib/jvm"};
         }
     },
-    WINDOWS("windows_i486_compiler2", "windows_amd64_compiler2",
-            "bin/client", "bin/server", "bin/dcevm", "bin/server", "bin/dcevm",
-            "bin/java.exe", "jvm.dll") {
+    WINDOWS(
+            "windows_i486_compiler2",
+            "windows_amd64_compiler2",
+            "bin/client",
+            "bin/server",
+            "bin/dcevm",
+            "bin/server",
+            "bin/dcevm",
+            "bin/java.exe",
+            "jvm.dll") {
         @Override
         public String[] paths() {
-            return new String[]{
-                    System.getenv("JAVA_HOME") + "/..",
-                    System.getenv("PROGRAMW6432") + "/JAVA",
-                    System.getenv("PROGRAMFILES") + "/JAVA",
-                    System.getenv("PROGRAMFILES(X86)") + "/JAVA",
-                    System.getenv("SYSTEMDRIVE") + "/JAVA"};
+            return new String[] {
+                System.getenv("JAVA_HOME") + "/..",
+                System.getenv("PROGRAMW6432") + "/JAVA",
+                System.getenv("PROGRAMFILES") + "/JAVA",
+                System.getenv("PROGRAMFILES(X86)") + "/JAVA",
+                System.getenv("SYSTEMDRIVE") + "/JAVA"
+            };
         }
     };
 
@@ -85,11 +107,16 @@ public enum ConfigurationInfo {
     private final String javaExecutable;
     private final String libraryName;
 
-    ConfigurationInfo(String resourcePath32, String resourcePath64,
-                      String clientPath,
-                      String server32Path, String dcevm32Path,
-                      String server64Path, String dcevm64Path,
-                      String javaExecutable, String libraryName) {
+    ConfigurationInfo(
+            String resourcePath32,
+            String resourcePath64,
+            String clientPath,
+            String server32Path,
+            String dcevm32Path,
+            String server64Path,
+            String dcevm64Path,
+            String javaExecutable,
+            String libraryName) {
         this.resourcePath32 = resourcePath32;
         this.resourcePath64 = resourcePath64;
         this.clientPath = clientPath;
@@ -208,7 +235,7 @@ public enum ConfigurationInfo {
 
         StringBuilder result = new StringBuilder();
         try (InputStream in = p.getErrorStream();
-             BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 result.append(line);
@@ -253,7 +280,7 @@ public enum ConfigurationInfo {
     public String getVersionString(Path jreDir, boolean altjvm) {
         try {
             if (altjvm) {
-                return executeJava(jreDir,  "-XXaltjvm=dcevm", "-version");
+                return executeJava(jreDir, "-XXaltjvm=dcevm", "-version");
             } else {
                 return executeJava(jreDir, "-version");
             }
@@ -267,11 +294,11 @@ public enum ConfigurationInfo {
         return versionString.contains("64-Bit") || versionString.contains("amd64");
     }
 
-    public String getJavaVersion(Path jreDir) throws IOException {
+    public String getJavaVersion(Path jreDir) {
         return getVersionHelper(jreDir, ".*(?:java|openjdk) version.*\"(.*)\".*", true, false);
     }
 
-    final public String getDCEVersion(Path jreDir, boolean altjvm) throws IOException {
+    public final String getDCEVersion(Path jreDir, boolean altjvm) {
         return getVersionHelper(jreDir, ".*Dynamic Code Evolution.*build ([^,]+),.*", false, altjvm);
     }
 
@@ -281,8 +308,7 @@ public enum ConfigurationInfo {
         Matcher matcher = Pattern.compile(regex).matcher(version);
 
         if (!matcher.matches()) {
-            return "Could not get " + (javaVersion ? "java" : "dce") +
-                    "version of " + jreDir.toAbsolutePath() + ".";
+            return "Could not get " + (javaVersion ? "java" : "dce") + "version of " + jreDir.toAbsolutePath() + ".";
         }
 
         version = matcher.replaceFirst("$1");

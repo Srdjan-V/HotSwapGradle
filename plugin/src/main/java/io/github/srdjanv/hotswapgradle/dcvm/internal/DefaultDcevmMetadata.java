@@ -1,6 +1,8 @@
 package io.github.srdjanv.hotswapgradle.dcvm.internal;
 
+import io.github.srdjanv.hotswapgradle.dcevmdetection.legacy.LegacyDcevmDetection;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmMetadata;
+import javax.inject.Inject;
 import org.gradle.api.Project;
 import org.gradle.api.internal.file.FileFactory;
 import org.gradle.api.provider.Provider;
@@ -9,9 +11,6 @@ import org.gradle.jvm.toolchain.*;
 import org.gradle.jvm.toolchain.internal.DefaultToolchainSpec;
 import org.gradle.jvm.toolchain.internal.JavaToolchain;
 import org.gradle.jvm.toolchain.internal.JavaToolchainInput;
-import io.github.srdjanv.hotswapgradle.util.DCEVMUtil;
-
-import javax.inject.Inject;
 
 public class DefaultDcevmMetadata implements DcevmMetadata {
     private final JvmToolchainMetadata jvmToolchainMetadata;
@@ -20,26 +19,27 @@ public class DefaultDcevmMetadata implements DcevmMetadata {
     private final Provider<Boolean> isDcevmInstalledLikeAltJvm;
     private final Provider<String> dcevmVersion;
 
-
     @Inject
     public DefaultDcevmMetadata(JvmToolchainMetadata jvmToolchainMetadata) {
         this.jvmToolchainMetadata = jvmToolchainMetadata;
 
-
         JavaToolchainSpec spec = new DefaultToolchainSpec(getProject().getObjects());
-        spec.getLanguageVersion().set(JavaLanguageVersion.of(jvmToolchainMetadata.metadata.getLanguageVersion().getMajorVersion()));
-        spec.getVendor().set(JvmVendorSpec.matching(jvmToolchainMetadata.metadata.getVendor().getRawVendor()));
-
+        spec.getLanguageVersion()
+                .set(JavaLanguageVersion.of(
+                        jvmToolchainMetadata.metadata.getLanguageVersion().getMajorVersion()));
+        spec.getVendor()
+                .set(JvmVendorSpec.matching(
+                        jvmToolchainMetadata.metadata.getVendor().getRawVendor()));
 
         var providerFactory = getProject().getProviders();
-        javaInstallationMetadata = providerFactory.provider(
-                () -> new JavaToolchain(jvmToolchainMetadata.metadata, getFileFactory(), new JavaToolchainInput(spec), false));
-        isDcevmPresent = providerFactory.provider(
-                () -> DCEVMUtil.isDCEVMPresent(javaInstallationMetadata.get().getInstallationPath().getAsFile().toPath()));
-        isDcevmInstalledLikeAltJvm = providerFactory.provider(
-                () -> DCEVMUtil.isDCEVMInstalledLikeAltJvm(javaInstallationMetadata.get().getInstallationPath().getAsFile().toPath()));
-        dcevmVersion = providerFactory.provider(
-                () -> DCEVMUtil.determineDCEVMVersion(javaInstallationMetadata.get().getInstallationPath().getAsFile().toPath()));
+        javaInstallationMetadata = providerFactory.provider(() -> new JavaToolchain(
+                jvmToolchainMetadata.metadata, getFileFactory(), new JavaToolchainInput(spec), false));
+        isDcevmPresent = providerFactory.provider(() -> LegacyDcevmDetection.isPresent(
+                javaInstallationMetadata.get().getInstallationPath().getAsFile().toPath()));
+        isDcevmInstalledLikeAltJvm = providerFactory.provider(() -> LegacyDcevmDetection.isInstalledLikeAltJvm(
+                javaInstallationMetadata.get().getInstallationPath().getAsFile().toPath()));
+        dcevmVersion = providerFactory.provider(() -> LegacyDcevmDetection.determineDCEVMVersion(
+                javaInstallationMetadata.get().getInstallationPath().getAsFile().toPath()));
     }
 
     public JvmToolchainMetadata getJvmToolchainMetadata() {
@@ -75,5 +75,4 @@ public class DefaultDcevmMetadata implements DcevmMetadata {
     public Project getProject() {
         throw new UnsupportedOperationException();
     }
-
 }

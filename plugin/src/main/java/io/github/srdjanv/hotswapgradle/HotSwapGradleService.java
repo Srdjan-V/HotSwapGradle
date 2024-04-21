@@ -1,6 +1,7 @@
 package io.github.srdjanv.hotswapgradle;
 
 import io.github.srdjanv.hotswapgradle.agent.HotSwapAgentProvider;
+import io.github.srdjanv.hotswapgradle.dcevmdetection.legacy.LegacyDcevmDetection;
 import io.github.srdjanv.hotswapgradle.registry.ICashedJVMRegistry;
 import io.github.srdjanv.hotswapgradle.registry.IKnownDcevmRegistry;
 import io.github.srdjanv.hotswapgradle.registry.ILocalJVMRegistry;
@@ -8,7 +9,6 @@ import io.github.srdjanv.hotswapgradle.registry.internal.CashedJVMRegistry;
 import io.github.srdjanv.hotswapgradle.registry.internal.KnownDcevmRegistry;
 import io.github.srdjanv.hotswapgradle.registry.internal.LocalJVMRegistry;
 import io.github.srdjanv.hotswapgradle.util.Constants;
-import io.github.srdjanv.hotswapgradle.util.DCEVMUtil;
 import io.github.srdjanv.hotswapgradle.util.FileUtils;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.services.BuildService;
@@ -17,10 +17,11 @@ import org.gradle.tooling.events.FinishEvent;
 import org.gradle.tooling.events.OperationCompletionListener;
 import org.gradle.tooling.events.task.TaskFinishEvent;
 
-public abstract class HotSwapGradleService implements BuildService<HotSwapGradleService.HotSwapParameters>, OperationCompletionListener {
+public abstract class HotSwapGradleService
+        implements BuildService<HotSwapGradleService.HotSwapParameters>, OperationCompletionListener {
     public interface HotSwapParameters extends BuildServiceParameters {
         DirectoryProperty getWorkingDirectory();
-        //todo offline mode
+        // todo offline mode
     }
 
     private final HotSwapAgentProvider downloader;
@@ -29,15 +30,18 @@ public abstract class HotSwapGradleService implements BuildService<HotSwapGradle
     private final ILocalJVMRegistry localJVMRegistry;
 
     public HotSwapGradleService() {
-        downloader = new HotSwapAgentProvider(Constants.AGENT_RELEASE_API_URL, getParameters().getWorkingDirectory());
+        downloader = new HotSwapAgentProvider(
+                Constants.AGENT_RELEASE_API_URL, getParameters().getWorkingDirectory());
         knownDCEVMRegistry = new KnownDcevmRegistry(this);
         cashedJVMRegistry = new CashedJVMRegistry(
-                DCEVMUtil::isDCEVMPresent,
+                LegacyDcevmDetection::isPresent,
                 FileUtils.jdkData(getParameters().getWorkingDirectory()).getAsFile());
         localJVMRegistry = new LocalJVMRegistry(cashedJVMRegistry);
     }
 
-    public HotSwapAgentProvider getAgentProvider() {return downloader;}
+    public HotSwapAgentProvider getAgentProvider() {
+        return downloader;
+    }
 
     public IKnownDcevmRegistry getKnownDCEVMRegistry() {
         return knownDCEVMRegistry;
@@ -51,7 +55,8 @@ public abstract class HotSwapGradleService implements BuildService<HotSwapGradle
         return localJVMRegistry;
     }
 
-    @Override public void onFinish(FinishEvent event) {
+    @Override
+    public void onFinish(FinishEvent event) {
         if (event instanceof TaskFinishEvent) cashedJVMRegistry.saveRegistry();
     }
 }
