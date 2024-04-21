@@ -8,14 +8,8 @@ import com.google.gson.stream.JsonReader;
 import io.github.srdjanv.hotswapgradle.agent.githubschema.GithubApiAssetsSchema;
 import io.github.srdjanv.hotswapgradle.agent.githubschema.GithubApiReleaseSchema;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmSpec;
+import io.github.srdjanv.hotswapgradle.util.FileIOUtils;
 import io.github.srdjanv.hotswapgradle.util.FileUtils;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.gradle.api.file.DirectoryProperty;
-import org.jetbrains.annotations.Nullable;
-
-
 import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
@@ -25,6 +19,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.*;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.gradle.api.file.DirectoryProperty;
+import org.jetbrains.annotations.Nullable;
 
 public class HotSwapAgentProvider {
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -34,13 +33,10 @@ public class HotSwapAgentProvider {
     private final Future<List<GithubApiReleaseSchema>> agentsManifest;
     private final Path agentsDir;
 
-
-    public HotSwapAgentProvider(
-            String agentReleaseApiUrl,
-            DirectoryProperty workingDirectory) {
+    public HotSwapAgentProvider(String agentReleaseApiUrl, DirectoryProperty workingDirectory) {
         this.agentReleaseApiUrl = agentReleaseApiUrl;
         this.agentsDir = FileUtils.agentDir(workingDirectory).getAsFile().toPath();
-        FileUtils.crateDirs(agentsDir);
+        FileIOUtils.createDirs(agentsDir);
         agentsManifest = downloader.submit(initAgents(workingDirectory));
         latestStable = requestAgent(new DownloadConfig(AgentType.DEFAULT));
     }
@@ -83,7 +79,10 @@ public class HotSwapAgentProvider {
         try {
             List<GithubApiReleaseSchema> manifests = agentsManifest.get(10, TimeUnit.MINUTES);
             if (config.tagName() != null)
-                assets = manifests.stream().filter(m -> m.tag_name().equals(config.tagName())).findFirst().orElse(null);
+                assets = manifests.stream()
+                        .filter(m -> m.tag_name().equals(config.tagName()))
+                        .findFirst()
+                        .orElse(null);
 
             if (assets == null)
                 for (GithubApiReleaseSchema a : manifests) {
@@ -102,7 +101,8 @@ public class HotSwapAgentProvider {
             throw new RuntimeException(e);
         }
         if (assets != null) return assets;
-        throw new InvalidDownloadRequestException("GithubApiReleaseSchema is not resolvable, DownloadConfig: " + config);
+        throw new InvalidDownloadRequestException(
+                "GithubApiReleaseSchema is not resolvable, DownloadConfig: " + config);
     }
 
     private Path doDownload(GithubApiAssetsSchema schema) {
@@ -110,7 +110,7 @@ public class HotSwapAgentProvider {
         boolean success = false;
         for (int errors = 0; errors < 4; errors++) {
             try (BufferedInputStream in = new BufferedInputStream(new URL(schema.browser_download_url()).openStream());
-                 FileOutputStream fileOutputStream = new FileOutputStream(downloadPath.toFile())) {
+                    FileOutputStream fileOutputStream = new FileOutputStream(downloadPath.toFile())) {
                 byte[] dataBuffer = new byte[1024];
                 int bytesRead;
                 while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
@@ -118,7 +118,7 @@ public class HotSwapAgentProvider {
                 }
                 success = true;
             } catch (IOException e) {
-                //todo
+                // todo
                 e.printStackTrace();
             }
         }
@@ -137,7 +137,8 @@ public class HotSwapAgentProvider {
         return () -> {
             List<GithubApiReleaseSchema> manifest = new ArrayList<>();
             List<GithubApiReleaseSchema> loadedAgentsManifest = loadAgentsManifest(gson, workingDir);
-            List<GithubApiReleaseSchema> downloadRemoteAgentsManifest = downloadRemoteAgentsManifest(gson, agentReleaseApiUrl);
+            List<GithubApiReleaseSchema> downloadRemoteAgentsManifest =
+                    downloadRemoteAgentsManifest(gson, agentReleaseApiUrl);
 
             if (!loadedAgentsManifest.equals(downloadRemoteAgentsManifest)) {
                 manifest.addAll(downloadRemoteAgentsManifest);
@@ -146,18 +147,18 @@ public class HotSwapAgentProvider {
                 saveAgentsManifest(gson, workingDir, downloadRemoteAgentsManifest);
             }
 
-            manifest.sort(
-                    Comparator.comparing(GithubApiReleaseSchema::created_at)
-                            .thenComparing(GithubApiReleaseSchema::published_at)
-                            .reversed());
+            manifest.sort(Comparator.comparing(GithubApiReleaseSchema::created_at)
+                    .thenComparing(GithubApiReleaseSchema::published_at)
+                    .reversed());
             return manifest;
         };
     }
 
-    private static void saveAgentsManifest(Gson gson, DirectoryProperty workingDir, List<GithubApiReleaseSchema> manifest) {
+    private static void saveAgentsManifest(
+            Gson gson, DirectoryProperty workingDir, List<GithubApiReleaseSchema> manifest) {
         try {
             var text = gson.toJson(manifest);
-            FileUtils.saveTestToFile(text, FileUtils.agentVersion(workingDir));
+            FileIOUtils.saveStringToFile(text, FileUtils.agentVersion(workingDir));
         } catch (JsonParseException | UncheckedIOException exception) {
             exception.printStackTrace();
         }
@@ -166,7 +167,7 @@ public class HotSwapAgentProvider {
     private static List<GithubApiReleaseSchema> loadAgentsManifest(Gson gson, DirectoryProperty workingDir) {
         List<GithubApiReleaseSchema> agents = Collections.emptyList();
         try {
-            var rawAgents = FileUtils.loadTextFromFile(FileUtils.agentVersion(workingDir));
+            var rawAgents = FileIOUtils.loadTextFromFile(FileUtils.agentVersion(workingDir));
             agents = gson.fromJson(rawAgents, new TypeToken<List<GithubApiReleaseSchema>>() {}.getType());
         } catch (JsonParseException | UncheckedIOException ignored) {
         } finally {
@@ -175,15 +176,14 @@ public class HotSwapAgentProvider {
         return agents;
     }
 
-    private static List<GithubApiReleaseSchema> downloadRemoteAgentsManifest(
-            Gson gson,
-            String agentReleaseApiUrl) {
+    private static List<GithubApiReleaseSchema> downloadRemoteAgentsManifest(Gson gson, String agentReleaseApiUrl) {
         List<GithubApiReleaseSchema> agentsManifest = Collections.emptyList();
-        try (CloseableHttpClient httpClient = HttpClientBuilder.create()
-                .build()) {
+        try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
             var getMethod = new HttpGet(agentReleaseApiUrl);
             var response = httpClient.execute(getMethod);
-            agentsManifest = gson.fromJson(new JsonReader(new InputStreamReader(response.getEntity().getContent())), new TypeToken<List<GithubApiReleaseSchema>>() {}.getType());
+            agentsManifest = gson.fromJson(
+                    new JsonReader(new InputStreamReader(response.getEntity().getContent())),
+                    new TypeToken<List<GithubApiReleaseSchema>>() {}.getType());
         } catch (IOException e) {
             System.err.printf("Couldn't load the release URL: %s%n", agentsManifest);
             e.printStackTrace();
@@ -193,7 +193,6 @@ public class HotSwapAgentProvider {
 
         return agentsManifest;
     }
-
 
     public static class DownloadException extends RuntimeException {
         public DownloadException() {

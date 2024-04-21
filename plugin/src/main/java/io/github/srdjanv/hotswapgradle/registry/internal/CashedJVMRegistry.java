@@ -7,18 +7,13 @@ import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmMetadata;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmSpec;
-import io.github.srdjanv.hotswapgradle.suppliers.CachedDcevmSupplier;
 import io.github.srdjanv.hotswapgradle.registry.ICashedJVMRegistry;
 import io.github.srdjanv.hotswapgradle.resolver.IDcevmMetadataLauncherResolver;
 import io.github.srdjanv.hotswapgradle.resolver.IDcevmMetadataResolver;
-import io.github.srdjanv.hotswapgradle.util.FileUtils;
+import io.github.srdjanv.hotswapgradle.suppliers.CachedDcevmSupplier;
+import io.github.srdjanv.hotswapgradle.util.FileIOUtils;
 import io.github.srdjanv.hotswapgradle.util.JavaUtil;
 import io.github.srdjanv.hotswapgradle.validator.DcevmValidator;
-import org.gradle.api.JavaVersion;
-import org.gradle.jvm.toolchain.JavaLauncher;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
@@ -26,9 +21,16 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import org.gradle.api.JavaVersion;
+import org.gradle.jvm.toolchain.JavaLauncher;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CashedJVMRegistry implements ICashedJVMRegistry {
-    private static final Gson gson = new GsonBuilder().setPrettyPrinting().enableComplexMapKeySerialization().create();
+    private static final Gson gson = new GsonBuilder()
+            .setPrettyPrinting()
+            .enableComplexMapKeySerialization()
+            .create();
     private final Lock lock = new ReentrantLock();
     public final File registryPath;
     private DcevmValidator validator;
@@ -44,7 +46,8 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
         dcevmRegistry = Suppliers.memoize(this::initRegistry);
     }
 
-    @Override public void setValidator(@NotNull DcevmValidator validator) {
+    @Override
+    public void setValidator(@NotNull DcevmValidator validator) {
         this.validator = Objects.requireNonNull(validator);
     }
 
@@ -52,10 +55,11 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
         lock.lock();
         Map<JavaVersion, List<Path>> resolvedDcevmRegistry = new HashMap<>();
         try {
-            String text = FileUtils.loadTextFromFile(registryPath);
+            String text = FileIOUtils.loadTextFromFile(registryPath);
             Map<JavaVersion, List<String>> dcevmRegistry = null;
             try {
-                dcevmRegistry = gson.fromJson(text, new TypeToken<Map<JavaVersion, String>>() {}.getType());
+                if (text != null)
+                    dcevmRegistry = gson.fromJson(text, new TypeToken<Map<JavaVersion, String>>() {}.getType());
             } catch (JsonParseException ignore) {
             }
 
@@ -63,8 +67,7 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
                 for (Map.Entry<JavaVersion, List<String>> entry : dcevmRegistry.entrySet()) {
                     if (entry.getValue() == null || entry.getValue().isEmpty()) continue;
                     JavaVersion javaVersion = entry.getKey();
-                    List<Path> dcevmPaths = entry.getValue()
-                            .stream()
+                    List<Path> dcevmPaths = entry.getValue().stream()
                             .map(File::new)
                             .map(File::toPath)
                             .filter(validator::validateDcevm)
@@ -87,10 +90,9 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
             Map<JavaVersion, List<String>> data = new HashMap<>();
 
             if (initialized) {
-                for (Map.Entry<JavaVersion, List<Path>> entry : dcevmRegistry.get().entrySet()) {
-                    List<String> paths = entry
-                            .getValue()
-                            .stream()
+                for (Map.Entry<JavaVersion, List<Path>> entry :
+                        dcevmRegistry.get().entrySet()) {
+                    List<String> paths = entry.getValue().stream()
                             .map(path -> path.normalize().toAbsolutePath())
                             .map(Path::toFile)
                             .map(File::toString)
@@ -100,16 +102,20 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
             }
 
             if (modified) {
-                Map<JavaVersion, List<Path>> metaData = dcevmMetadataCache.values()
-                        .stream()
-                        .collect(Collectors.groupingBy(metadata -> JavaUtil.versionOf(metadata.getJavaInstallationMetadata().get().getLanguageVersion()),
-                                Collectors.mapping(metadata -> metadata.getJavaInstallationMetadata().get().getInstallationPath().getAsFile().toPath(),
-                                        Collectors.toList())
-                        ));
+                Map<JavaVersion, List<Path>> metaData = dcevmMetadataCache.values().stream()
+                        .collect(Collectors.groupingBy(
+                                metadata -> JavaUtil.versionOf(metadata.getJavaInstallationMetadata()
+                                        .get()
+                                        .getLanguageVersion()),
+                                Collectors.mapping(
+                                        metadata -> metadata.getJavaInstallationMetadata()
+                                                .get()
+                                                .getInstallationPath()
+                                                .getAsFile()
+                                                .toPath(),
+                                        Collectors.toList())));
                 for (Map.Entry<JavaVersion, List<Path>> entry : metaData.entrySet()) {
-                    List<String> normalizedPaths = entry
-                            .getValue()
-                            .stream()
+                    List<String> normalizedPaths = entry.getValue().stream()
                             .map(path -> path.normalize().toAbsolutePath())
                             .map(Path::toFile)
                             .map(File::toString)
@@ -128,16 +134,15 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
                 regDirty = false;
                 return;
             }
-            FileUtils.saveTestToFile(gson.toJson(data), registryPath);
+            FileIOUtils.saveStringToFile(gson.toJson(data), registryPath);
             regDirty = false;
         } finally {
             lock.unlock();
         }
     }
 
-    @Override public void populateRegistry(
-            JavaVersion javaVersion,
-            CachedDcevmSupplier cachedDcevmSupplier) {
+    @Override
+    public void populateRegistry(JavaVersion javaVersion, CachedDcevmSupplier cachedDcevmSupplier) {
         lock.lock();
         try {
             List<Path> valid = new ArrayList<>();
@@ -175,7 +180,8 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
         }
     }
 
-    @Override public @Nullable JavaLauncher locateVM(
+    @Override
+    public @Nullable JavaLauncher locateVM(
             IDcevmMetadataResolver metadataResolver,
             IDcevmMetadataLauncherResolver metadataLauncherResolver,
             DcevmSpec dcevmSpec) {
