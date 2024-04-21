@@ -1,34 +1,45 @@
-//enables java 21 features on java 8
-//change back to 'com.github.bsideup.jabel' once this gets resolved https://github.com/bsideup/jabel/issues/182
-String jabelPlugin = "com.pkware.jabel:jabel-javac-plugin:1.0.1-1";
-
 repositories {
     mavenCentral()
 }
 dependencies {
-    add("compileOnly", jabelPlugin)
-    add("annotationProcessor", jabelPlugin)
-    add("testAnnotationProcessor", jabelPlugin)
-    add("testImplementation", jabelPlugin)
+    //enables java 21 features on java 8
+    //change back to 'com.github.bsideup.jabel' once this gets resolved https://github.com/bsideup/jabel/issues/182
+    String jabelPlugin = "com.pkware.jabel:jabel-javac-plugin:1.0.1-1";
+
+    // workaround for https://github.com/bsideup/jabel/issues/174
+    String jnaPlatform = "net.java.dev.jna:jna-platform:5.13.0"
+
+    compileOnly jabelPlugin
+    annotationProcessor jabelPlugin
+    annotationProcessor jnaPlatform
+
+    testCompileOnly jabelPlugin
+    testAnnotationProcessor jabelPlugin
+    testAnnotationProcessor jnaPlatform
 }
 
-configure([tasks.compileJava, tasks.compileTestJava]) {
-    sourceCompatibility = 21 // for the IDE support
-    options.release = 8
-
-    javaCompiler = javaToolchains.compilerFor {
-        languageVersion = JavaLanguageVersion.of(17)
+tasks.withType(JavaCompile).forEach {
+    it.configure {
+        sourceCompatibility = 17 // for the IDE support
+        options.release = 8
+        javaCompiler = javaToolchains.compilerFor {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
     }
 }
 
-configure([tasks.javadoc]) {
-    javadocTool = project.javaToolchains.javadocToolFor {
-        languageVersion = JavaLanguageVersion.of(17)
+tasks.withType(Javadoc).forEach {
+    it.configure {
+        javadocTool = project.javaToolchains.javadocToolFor {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
     }
 }
 
-tasks.named('test', Test) {
-    javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(8)
+tasks.withType(Test).forEach {
+    it.configure {
+        javaLauncher = javaToolchains.launcherFor {
+            languageVersion = JavaLanguageVersion.of(8)
+        }
     }
 }

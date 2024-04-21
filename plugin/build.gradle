@@ -74,8 +74,3 @@ tasks.named('check') {
     // Run the functional tests as part of `check`
     dependsOn(tasks.functionalTest)
 }
-
-tasks.named('test') {
-    // Use JUnit Jupiter for unit tests.
-    useJUnitPlatform()
-}
