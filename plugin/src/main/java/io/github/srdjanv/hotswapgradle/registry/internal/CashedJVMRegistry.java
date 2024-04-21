@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
+import io.github.srdjanv.hotswapgradle.agent.HotswapAgentProvider;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmMetadata;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmSpec;
 import io.github.srdjanv.hotswapgradle.registry.ICashedJVMRegistry;
@@ -15,6 +16,7 @@ import io.github.srdjanv.hotswapgradle.util.FileIOUtils;
 import io.github.srdjanv.hotswapgradle.util.JavaUtil;
 import io.github.srdjanv.hotswapgradle.validator.DcevmValidator;
 import java.io.File;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
@@ -25,10 +27,14 @@ import org.gradle.api.JavaVersion;
 import org.gradle.jvm.toolchain.JavaLauncher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CashedJVMRegistry implements ICashedJVMRegistry {
+    private final Logger logger = LoggerFactory.getLogger(HotswapAgentProvider.class);
+
     private static final Gson gson = new GsonBuilder()
-            .setPrettyPrinting()
+            // .setPrettyPrinting() todo add when debugging
             .enableComplexMapKeySerialization()
             .create();
     private final Lock lock = new ReentrantLock();
@@ -55,16 +61,22 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
         lock.lock();
         Map<JavaVersion, List<Path>> resolvedDcevmRegistry = new HashMap<>();
         try {
-            String text = FileIOUtils.loadTextFromFile(registryPath);
-            Map<JavaVersion, List<String>> dcevmRegistry = null;
+            Map<JavaVersion, Set<String>> dcevmRegistry = null;
+            String text = null;
+            try {
+                text = FileIOUtils.loadTextFromFile(registryPath);
+            } catch (UncheckedIOException e) {
+                logger.debug("Failed to load registry from {}", registryPath, e);
+            }
             try {
                 if (text != null)
-                    dcevmRegistry = gson.fromJson(text, new TypeToken<Map<JavaVersion, String>>() {}.getType());
-            } catch (JsonParseException ignore) {
+                    dcevmRegistry = gson.fromJson(text, new TypeToken<Map<JavaVersion, Set<String>>>() {}.getType());
+            } catch (JsonParseException exception) {
+                logger.debug("Failed to parse dcevm registry", exception);
             }
 
             if (dcevmRegistry != null) {
-                for (Map.Entry<JavaVersion, List<String>> entry : dcevmRegistry.entrySet()) {
+                for (Map.Entry<JavaVersion, Set<String>> entry : dcevmRegistry.entrySet()) {
                     if (entry.getValue() == null || entry.getValue().isEmpty()) continue;
                     JavaVersion javaVersion = entry.getKey();
                     List<Path> dcevmPaths = entry.getValue().stream()
@@ -134,7 +146,14 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
                 regDirty = false;
                 return;
             }
-            FileIOUtils.saveStringToFile(gson.toJson(data), registryPath);
+
+            try {
+                FileIOUtils.saveStringToFile(gson.toJson(data), registryPath);
+            } catch (UncheckedIOException exception) {
+                logger.debug("Failed to save registry, path {}", registryPath, exception);
+            } catch (JsonParseException exception) {
+                logger.debug("Failed to parse registry while saving", exception);
+            }
             regDirty = false;
         } finally {
             lock.unlock();
@@ -145,9 +164,13 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
     public void populateRegistry(JavaVersion javaVersion, CachedDcevmSupplier cachedDcevmSupplier) {
         lock.lock();
         try {
-            List<Path> valid = new ArrayList<>();
+            Set<Path> valid = new HashSet<>();
             for (Path localJvm : cachedDcevmSupplier.getLocalJvms()) {
-                if (validator.validateDcevm(localJvm)) valid.add(localJvm);
+                if (validator.validateDcevm(localJvm)) {
+                    if (valid.add(localJvm)) {
+                        logger.info("Populating CashedJVMRegistry with local jvm {}", localJvm);
+                    }
+                } else logger.info("Invalid jvm {}", localJvm);
             }
 
             if (!valid.isEmpty()) {
@@ -165,6 +188,7 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
     public void addToRegistry(DcevmMetadata metadata) {
         lock.lock();
         try {
+            logger.info("Adding DcevmMetadata to registry {}", metadata);
             var javaMetadata = metadata.getJavaInstallationMetadata().get();
             var javaVersion = JavaUtil.versionOf(javaMetadata.getLanguageVersion());
             var javaHome = javaMetadata.getInstallationPath().getAsFile().toPath();
