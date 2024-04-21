@@ -17,7 +17,7 @@ java {
 def run11 = registerTask("run11")
 def run17 = registerTask("run17")
 
-hotSwap {
+hotswapProvider {
     configureTask(tasks.named("run"))
     configureTask(run11) {
         languageVersion = JavaLanguageVersion.of(11)
@@ -28,16 +28,12 @@ hotSwap {
 }
 
 TaskProvider<JavaExec> registerTask(String name) {
-    def defaultTaskProvider = tasks.named("run", JavaExec)
     TaskProvider<JavaExec> runTask = tasks.register(name, JavaExec)
     runTask.configure {
-        def defaultTask = defaultTaskProvider.get()
-        setGroup(defaultTask.getGroup())
+        setGroup("application")
 
-        setClasspath(defaultTask.getClasspath())
-        getMainModule().set(application.getMainModule())
+        setClasspath(sourceSets.main.runtimeClasspath)
         getMainClass().set(application.getMainClass())
-        getJvmArguments().convention(defaultTask.getJvmArgs())
     }
     return runTask
 }
