@@ -45,6 +45,7 @@ gradlePlugin {
         hotSwapGradle {
             id = 'io.github.srdjan-v.hotswap-gradle'
             implementationClass = 'io.github.srdjanv.hotswapgradle.HotswapGradlePlugin'
+            displayName = 'Hotswap Gradle plugin'
             description = "This is an utility plugin to locate Dcevm and download HotswapAgent for individual JavaExec tasks"
             tags = ["java", "JVM", "DCEVM", "HotswapAgent"]
         }
