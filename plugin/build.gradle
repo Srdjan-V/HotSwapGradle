@@ -47,7 +47,7 @@ gradlePlugin {
     plugins {
         hotSwapGradle {
             id = 'io.github.srdjan-v.hotswap-gradle'
-            implementationClass = 'io.github.srdjanv.hotswapgradle.HotSwapGradlePlugin'
+            implementationClass = 'io.github.srdjanv.hotswapgradle.HotswapGradlePlugin'
         }
     }
 }

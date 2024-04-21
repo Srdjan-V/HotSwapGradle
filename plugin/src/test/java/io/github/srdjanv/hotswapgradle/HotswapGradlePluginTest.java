@@ -9,7 +9,7 @@ import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.jupiter.api.Test;
 
-class HotSwapGradlePluginTest {
+class HotswapGradlePluginTest {
     @Test
     void pluginRegistersATask() {
         Project project = ProjectBuilder.builder().build();

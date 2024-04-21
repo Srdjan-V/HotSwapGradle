@@ -10,7 +10,7 @@ import org.gradle.api.Project;
 import org.gradle.build.event.BuildEventsListenerRegistry;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class HotSwapGradlePlugin implements Plugin<Project> {
+public abstract class HotswapGradlePlugin implements Plugin<Project> {
 
     @Inject
     public abstract BuildEventsListenerRegistry getEventsListenerRegistry();
