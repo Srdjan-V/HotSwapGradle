@@ -18,6 +18,9 @@ afterEvaluate {
         from(project(":dcevm-detect").sourceSets.main.allJava)
     }
 }
+tasks.withType(Javadoc).configureEach {
+    options.addStringOption('Xdoclint:-missing', '-quiet')
+}
 
 dependencies {
     compileOnly(project(":dcevm-detect"))
