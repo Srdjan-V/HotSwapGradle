@@ -20,6 +20,11 @@ public interface IKnownDcevmRegistry extends IDcevmLocator {
                 () -> Collections.singletonList(dcevmSpec -> {
                     dcevmSpec.getLanguageVersion().set(JavaLanguageVersion.of(8));
                     dcevmSpec.getVendor().set(JvmVendorSpec.matching("trava"));
+                    dcevmSpec
+                            .getArguments()
+                            .set(Collections.singletonList(String.format(
+                                    "-javaagent:%s",
+                                    dcevmSpec.getAgentJar().get().getAsFile().getAbsolutePath())));
                 }));
 
         populateRegistry(JavaVersion.VERSION_11, () -> {
