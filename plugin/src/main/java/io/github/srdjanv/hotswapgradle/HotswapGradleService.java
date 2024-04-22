@@ -25,6 +25,8 @@ public abstract class HotswapGradleService
 
         Property<Boolean> getDebug();
 
+        Property<String> getAgentApiUrl();
+
         Property<Boolean> getOfflineMode();
 
         Property<Boolean> getIsCachedRegistryPersistent();

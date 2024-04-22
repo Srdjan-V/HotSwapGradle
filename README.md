@@ -37,6 +37,10 @@ Custom properties are available with their types
 #This will enable more logging, default false
 io.github.srdjan-v.hotswap-gradle.debug=Boolean
 
+#Agent GitURl
+#Default https://api.github.com/repos/HotswapProjects/HotswapAgent/releases
+io.github.srdjan-v.hotswap-gradle.agent-api-url=String
+
 #This will set the agent into offline mode explicitly
 io.github.srdjan-v.hotswap-gradle.offline-mode=Boolean
 

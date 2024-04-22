@@ -14,6 +14,11 @@ public class PropsUtil {
         return getBoolOrDefault(project, "io.github.srdjan-v.hotswap-gradle.cached-registry-persistence", true);
     }
 
+    public static String getAgentGitUrl(Project project) {
+        return getStringOrDefault(
+                project, "io.github.srdjan-v.hotswap-gradle.agent-api-url", Constants.AGENT_RELEASE_API_URL);
+    }
+
     public static Boolean isOfflineMode(Project project) {
         return getBoolOrDefault(project, "io.github.srdjan-v.hotswap-gradle.offline-mode", () -> project.getGradle()
                 .getStartParameter()
@@ -41,5 +46,14 @@ public class PropsUtil {
     public static Boolean getBoolOrDefault(Project project, String name, boolean defaultValue) {
         var value = project.findProperty(name);
         return value instanceof Boolean ? (Boolean) value : defaultValue;
+    }
+
+    public static String getStringOrDefault(Project project, String name, Supplier<String> defaultValue) {
+        return getStringOrDefault(project, name, defaultValue.get());
+    }
+
+    public static String getStringOrDefault(Project project, String name, String defaultValue) {
+        var value = project.findProperty(name);
+        return value instanceof String ? (String) value : defaultValue;
     }
 }

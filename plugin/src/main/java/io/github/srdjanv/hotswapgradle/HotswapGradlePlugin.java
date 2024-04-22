@@ -24,6 +24,7 @@ public abstract class HotswapGradlePlugin implements Plugin<Project> {
                     var params = spec.getParameters();
                     params.getWorkingDirectory().set(PropsUtil.getWorkingDir(project));
                     params.getDebug().set(PropsUtil.isDebug(project));
+                    params.getAgentApiUrl().set(PropsUtil.getAgentGitUrl(project));
                     params.getOfflineMode().set(PropsUtil.isOfflineMode(project));
                     params.getIsCachedRegistryPersistent().set(PropsUtil.isCachedRegistryPersistent(project));
                 });
