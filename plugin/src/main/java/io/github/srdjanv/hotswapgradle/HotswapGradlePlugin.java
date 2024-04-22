@@ -4,6 +4,7 @@
 package io.github.srdjanv.hotswapgradle;
 
 import io.github.srdjanv.hotswapgradle.extentions.HotswapExtension;
+import io.github.srdjanv.hotswapgradle.util.PropsUtil;
 import javax.inject.Inject;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -16,13 +17,16 @@ public abstract class HotswapGradlePlugin implements Plugin<Project> {
     public abstract BuildEventsListenerRegistry getEventsListenerRegistry();
 
     @Override
-    public void apply(@NotNull Project project) {
+    public void apply(@NotNull final Project project) {
         var serviceProvider = project.getGradle()
                 .getSharedServices()
-                .registerIfAbsent(
-                        HotswapGradleService.class.getName(), HotswapGradleService.class, spec -> spec.getParameters()
-                                .getWorkingDirectory()
-                                .set(project.getGradle().getGradleUserHomeDir()));
+                .registerIfAbsent(HotswapGradleService.class.getName(), HotswapGradleService.class, spec -> {
+                    var params = spec.getParameters();
+                    params.getWorkingDirectory().set(PropsUtil.getWorkingDir(project));
+                    params.getDebug().set(PropsUtil.isDebug(project));
+                    params.getOfflineMode().set(PropsUtil.isOfflineMode(project));
+                    params.getIsCachedRegistryPersistent().set(PropsUtil.isCachedRegistryPersistent(project));
+                });
 
         getEventsListenerRegistry().onTaskCompletion(serviceProvider);
         project.getExtensions().create(HotswapExtension.NAME, HotswapExtension.class);

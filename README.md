@@ -32,6 +32,20 @@ hotswapProvider {
 
 }
 ```
+Custom properties are available with their types
+```properties
+#This will enable more logging, default false
+io.github.srdjan-v.hotswap-gradle.debug=Boolean
+
+#This will set the agent into offline mode explicitly
+io.github.srdjan-v.hotswap-gradle.offline-mode=Boolean
+
+#Data dir, default GradleUserHomeDir
+io.github.srdjan-v.hotswap-gradle.data-directory=String
+
+#If the agent should persist cached dcevm's, default true 
+io.github.srdjan-v.hotswap-gradle.cached-registry-persistence=Boolean
+```
 
 ## Disclamer
 

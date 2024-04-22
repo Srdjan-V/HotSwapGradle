@@ -11,6 +11,7 @@ import io.github.srdjanv.hotswapgradle.registry.internal.LocalJVMRegistry;
 import io.github.srdjanv.hotswapgradle.util.Constants;
 import io.github.srdjanv.hotswapgradle.util.FileUtils;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.provider.Property;
 import org.gradle.api.services.BuildService;
 import org.gradle.api.services.BuildServiceParameters;
 import org.gradle.tooling.events.FinishEvent;
@@ -21,7 +22,12 @@ public abstract class HotswapGradleService
         implements BuildService<HotswapGradleService.HotSwapParameters>, OperationCompletionListener {
     public interface HotSwapParameters extends BuildServiceParameters {
         DirectoryProperty getWorkingDirectory();
-        // todo offline mode
+
+        Property<Boolean> getDebug();
+
+        Property<Boolean> getOfflineMode();
+
+        Property<Boolean> getIsCachedRegistryPersistent();
     }
 
     private final HotswapAgentProvider downloader;
