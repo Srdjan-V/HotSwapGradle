@@ -159,6 +159,15 @@ public class HotswapAgentProvider {
     }
 
     private Callable<List<GithubApiReleaseSchema>> initAgents(DirectoryProperty workingDir) {
+        if (service.getParameters().getOfflineMode().get())
+            return () -> {
+                List<GithubApiReleaseSchema> loadedAgentsManifest = loadAgentsManifest(gson, workingDir);
+                loadedAgentsManifest.sort(Comparator.comparing(GithubApiReleaseSchema::created_at)
+                        .thenComparing(GithubApiReleaseSchema::published_at)
+                        .reversed());
+
+                return loadedAgentsManifest;
+            };
         return () -> {
             List<GithubApiReleaseSchema> manifest = new ArrayList<>();
             List<GithubApiReleaseSchema> loadedAgentsManifest = loadAgentsManifest(gson, workingDir);
@@ -203,7 +212,6 @@ public class HotswapAgentProvider {
 
     private List<GithubApiReleaseSchema> downloadRemoteAgentsManifest(Gson gson, String agentReleaseApiUrl) {
         List<GithubApiReleaseSchema> agentsManifest = Collections.emptyList();
-        if (service.getParameters().getOfflineMode().get()) return agentsManifest;
         try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
             var getMethod = new HttpGet(agentReleaseApiUrl);
             var response = httpClient.execute(getMethod);
