@@ -22,11 +22,11 @@ import org.jetbrains.annotations.Nullable;
 
 public class KnownDcevmRegistry implements IKnownDcevmRegistry {
     private final Lock lock = new ReentrantLock();
-    private final HotswapGradleService hotSwapGradleService;
+    private final HotswapGradleService service;
     private final Map<JavaVersion, List<Action<? super DcevmSpec>>> dcevmRegistry = new HashMap<>();
 
-    public KnownDcevmRegistry(HotswapGradleService hotSwapGradleService) {
-        this.hotSwapGradleService = hotSwapGradleService;
+    public KnownDcevmRegistry(HotswapGradleService service) {
+        this.service = service;
         setDefaultRegistry();
     }
 
@@ -71,7 +71,7 @@ public class KnownDcevmRegistry implements IKnownDcevmRegistry {
             var specs = dcevmRegistry.get(javaVersion);
             if (specs == null || specs.isEmpty()) return javaLauncher;
             for (Action<? super DcevmSpec> spec : specs) {
-                var resolvedSpec = specResolver.resolveDcevmSpec(hotSwapGradleService, spec);
+                var resolvedSpec = specResolver.resolveDcevmSpec(service, spec);
                 var resolvedLauncher = launcherResolver.resolveLauncher(resolvedSpec);
                 try {
                     javaLauncher = resolvedLauncher.get();

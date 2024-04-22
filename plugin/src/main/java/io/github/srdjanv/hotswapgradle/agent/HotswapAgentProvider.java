@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
+import io.github.srdjanv.hotswapgradle.HotswapGradleService;
 import io.github.srdjanv.hotswapgradle.agent.githubschema.GithubApiAssetsSchema;
 import io.github.srdjanv.hotswapgradle.agent.githubschema.GithubApiReleaseSchema;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmSpec;
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 public class HotswapAgentProvider {
     private final Logger logger = LoggerFactory.getLogger(HotswapAgentProvider.class);
+    private final HotswapGradleService service;
     private final Gson gson;
     private final ExecutorService downloader = Executors.newFixedThreadPool(2);
     private final Future<Path> latestStable;
@@ -36,12 +38,15 @@ public class HotswapAgentProvider {
     private final Future<List<GithubApiReleaseSchema>> agentsManifest;
     private final Path agentsDir;
 
-    public HotswapAgentProvider(String agentReleaseApiUrl, DirectoryProperty workingDirectory) {
-        gson = new GsonBuilder()
-                // .setPrettyPrinting() todo add when debugging
-                .create();
+    public HotswapAgentProvider(HotswapGradleService service) {
+        this.service = service;
 
-        this.agentReleaseApiUrl = agentReleaseApiUrl;
+        var gsonBuilder = new GsonBuilder();
+        if (service.getParameters().getDebug().get()) gsonBuilder.setPrettyPrinting();
+        gson = gsonBuilder.create();
+
+        final DirectoryProperty workingDirectory = service.getParameters().getWorkingDirectory();
+        this.agentReleaseApiUrl = service.getParameters().getAgentApiUrl().get();
         this.agentsDir = FileUtils.agentDir(workingDirectory).getAsFile().toPath();
         FileIOUtils.createDirs(agentsDir);
         agentsManifest = downloader.submit(initAgents(workingDirectory));
@@ -125,6 +130,8 @@ public class HotswapAgentProvider {
     }
 
     private Path doDownload(GithubApiAssetsSchema schema) {
+        if (service.getParameters().getOfflineMode().get())
+            throw new DownloadException("Gradle is in offline mode, DownloadConfig: " + schema);
         Path downloadPath = agentsDir.resolve(schema.name());
         boolean success = false;
         for (int errors = 0; errors < 4; errors++) {
@@ -137,7 +144,7 @@ public class HotswapAgentProvider {
                 }
                 success = true;
             } catch (IOException e) {
-                logger.error("Download failed {} {}", errors, e);
+                logger.error("Download failed {} time/s", errors, e);
             }
         }
         if (!success) throw new DownloadException(String.format("Agent download failed, Path: %s", downloadPath));
@@ -196,6 +203,7 @@ public class HotswapAgentProvider {
 
     private List<GithubApiReleaseSchema> downloadRemoteAgentsManifest(Gson gson, String agentReleaseApiUrl) {
         List<GithubApiReleaseSchema> agentsManifest = Collections.emptyList();
+        if (service.getParameters().getOfflineMode().get()) return agentsManifest;
         try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
             var getMethod = new HttpGet(agentReleaseApiUrl);
             var response = httpClient.execute(getMethod);

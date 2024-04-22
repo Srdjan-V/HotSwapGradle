@@ -5,7 +5,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
+import io.github.srdjanv.hotswapgradle.HotswapGradleService;
 import io.github.srdjanv.hotswapgradle.agent.HotswapAgentProvider;
+import io.github.srdjanv.hotswapgradle.dcevmdetection.legacy.LegacyDcevmDetection;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmMetadata;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmSpec;
 import io.github.srdjanv.hotswapgradle.registry.ICashedJVMRegistry;
@@ -13,6 +15,7 @@ import io.github.srdjanv.hotswapgradle.resolver.IDcevmMetadataLauncherResolver;
 import io.github.srdjanv.hotswapgradle.resolver.IDcevmMetadataResolver;
 import io.github.srdjanv.hotswapgradle.suppliers.CachedDcevmSupplier;
 import io.github.srdjanv.hotswapgradle.util.FileIOUtils;
+import io.github.srdjanv.hotswapgradle.util.FileUtils;
 import io.github.srdjanv.hotswapgradle.util.JavaUtil;
 import io.github.srdjanv.hotswapgradle.validator.DcevmValidator;
 import java.io.File;
@@ -32,12 +35,9 @@ import org.slf4j.LoggerFactory;
 
 public class CashedJVMRegistry implements ICashedJVMRegistry {
     private final Logger logger = LoggerFactory.getLogger(HotswapAgentProvider.class);
-
-    private static final Gson gson = new GsonBuilder()
-            // .setPrettyPrinting() todo add when debugging
-            .enableComplexMapKeySerialization()
-            .create();
     private final Lock lock = new ReentrantLock();
+    private final HotswapGradleService service;
+    private final Gson gson;
     public final File registryPath;
     private DcevmValidator validator;
     private final Map<Path, DcevmMetadata> dcevmMetadataCache = new HashMap<>();
@@ -46,9 +46,16 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
     private boolean initialized = false;
     private boolean modified = false;
 
-    public CashedJVMRegistry(DcevmValidator validator, File registryPath) {
-        this.registryPath = registryPath;
-        this.validator = validator;
+    public CashedJVMRegistry(HotswapGradleService service) {
+        this.service = service;
+
+        var gsonBuilder = new GsonBuilder().enableComplexMapKeySerialization();
+        if (service.getParameters().getDebug().get()) gsonBuilder.setPrettyPrinting();
+        gson = gsonBuilder.create();
+
+        this.registryPath =
+                FileUtils.jdkData(service.getParameters().getWorkingDirectory()).getAsFile();
+        this.validator = LegacyDcevmDetection::isPresent;
         dcevmRegistry = Suppliers.memoize(this::initRegistry);
     }
 
@@ -60,6 +67,7 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
     private Map<JavaVersion, List<Path>> initRegistry() {
         lock.lock();
         Map<JavaVersion, List<Path>> resolvedDcevmRegistry = new HashMap<>();
+        if (!service.getParameters().getIsCachedRegistryPersistent().get()) return resolvedDcevmRegistry;
         try {
             Map<JavaVersion, Set<String>> dcevmRegistry = null;
             String text = null;
@@ -98,6 +106,7 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
     public void saveRegistry() {
         lock.lock();
         try {
+            if (!service.getParameters().getIsCachedRegistryPersistent().get()) return;
             if (!regDirty && !initialized && !modified) return;
             Map<JavaVersion, List<String>> data = new HashMap<>();
 
