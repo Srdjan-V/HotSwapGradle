@@ -10,6 +10,7 @@ import io.github.srdjanv.hotswapgradle.util.JavaUtil;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import org.apache.commons.lang3.tuple.Pair;
 import org.gradle.api.Action;
@@ -81,7 +82,7 @@ public class KnownDcevmRegistry implements IKnownDcevmRegistry {
                         .add(Pair.of(spec, knownSpec));
             }
 
-            topBrake:
+            topBreak:
             for (Preference value : Preference.values()) {
                 List<Pair<Action<? super DcevmSpec>, DcevmSpec>> specPairs = resolvedSpecs.get(value);
                 if (specPairs == null) continue;
@@ -90,7 +91,7 @@ public class KnownDcevmRegistry implements IKnownDcevmRegistry {
                     try {
                         javaLauncher = resolvedLauncher.get();
                         specPair.getLeft().execute(dcevmSpec);
-                        break topBrake;
+                        break topBreak;
                     } catch (GradleException e) {
                         logger.debug("Failed to resolve DCEVM spec", e);
                     }
@@ -102,35 +103,33 @@ public class KnownDcevmRegistry implements IKnownDcevmRegistry {
         return javaLauncher;
     }
 
-    private enum Preference {
-        VENDOR {
-            @Override
-            boolean matching(DcevmSpec knownSpeck, DcevmSpec requestedSpec) {
-                if (knownSpeck.getVendor().isPresent()
-                        && requestedSpec.getVendor().isPresent())
-                    return knownSpeck
-                            .getVendor()
-                            .get()
-                            .matches(requestedSpec.getVendor().get().toString());
-                return false;
-            }
-        },
-        ANYTHING {
-            @Override
-            boolean matching(DcevmSpec knownSpeck, DcevmSpec requestedSpec) {
-                return true;
-            }
-        };
+    private enum Preference implements BiPredicate<DcevmSpec, DcevmSpec> {
+        VENDOR((knownSpec, requestedSpec) -> {
+            if (knownSpec.getVendor().isPresent() && requestedSpec.getVendor().isPresent())
+                return knownSpec
+                        .getVendor()
+                        .get()
+                        .matches(requestedSpec.getVendor().get().toString());
+            return false;
+        }),
+        ANYTHING((knownSpeck, requestedSpec) -> true);
+
+        private final BiPredicate<DcevmSpec, DcevmSpec> predicate;
+
+        Preference(BiPredicate<DcevmSpec, DcevmSpec> predicate) {
+            this.predicate = predicate;
+        }
+
+        @Override
+        public boolean test(DcevmSpec knownSpec, DcevmSpec requestedSpec) {
+            return predicate.test(knownSpec, requestedSpec);
+        }
 
         static Preference getPreference(DcevmSpec knownSpeck, DcevmSpec requestedSpec) {
             for (Preference value : Preference.values()) {
-                if (value.matching(knownSpeck, requestedSpec)) {
-                    return value;
-                }
+                if (value.test(knownSpeck, requestedSpec)) return value;
             }
             throw new IllegalStateException("Unknown preference: " + knownSpeck);
         }
-
-        abstract boolean matching(DcevmSpec knownSpeck, DcevmSpec requestedSpec);
     }
 }
