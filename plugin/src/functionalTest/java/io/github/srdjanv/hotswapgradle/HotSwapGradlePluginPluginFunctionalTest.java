@@ -3,46 +3,91 @@
  */
 package io.github.srdjanv.hotswapgradle;
 
+import io.github.srdjanv.hotswapgradle.base.ProjectFile;
+import io.github.srdjanv.hotswapgradle.base.SettingsFile;
+import io.github.srdjanv.hotswapgradle.base.TestUtil;
 import java.io.File;
-import java.io.IOException;
-import java.io.Writer;
-import java.io.FileWriter;
-
-import org.gradle.testkit.runner.GradleRunner;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import static org.junit.jupiter.api.Assertions.*;
 
 class HotSwapGradlePluginPluginFunctionalTest {
     @TempDir
     File projectDir;
 
-    private File getBuildFile() {
-        return new File(projectDir, "build.gradle");
-    }
-
-    private File getSettingsFile() {
-        return new File(projectDir, "settings.gradle");
-    }
-
-    @Test void canRunBuild() throws IOException {
-        writeString(getSettingsFile(), "");
-        writeString(getBuildFile(),
-            "plugins {" +
-            "  id('io.github.srdjan-v.hotswap-gradle')" +
-            "}");
-
-        // Run the build
-        GradleRunner runner = GradleRunner.create();
-        runner.forwardOutput();
-        runner.withPluginClasspath();
-        runner.withProjectDir(projectDir);
+    @Test
+    void canRunBuild() {
+        var runner = TestUtil.provideTestRunner(
+                projectDir,
+                TestUtil::defaultConfig,
+                settingsFile -> settingsFile.plugin(SettingsFile.Plugins.FOOJAY),
+                projectFile -> projectFile.plugin(ProjectFile.Plugins.HOTSWAP));
         runner.build();
     }
 
-    private void writeString(File file, String string) throws IOException {
-        try (Writer writer = new FileWriter(file)) {
-            writer.write(string);
-        }
+    @Test
+    void canProvideJDK8Agent() {
+        var runner = TestUtil.provideTestRunner(
+                projectDir,
+                TestUtil::defaultConfig,
+                settingsFile -> settingsFile.plugin(SettingsFile.Plugins.FOOJAY),
+                projectFile -> {
+                    projectFile.plugin(ProjectFile.Plugins.APPLICATION);
+                    projectFile.plugin(ProjectFile.Plugins.HOTSWAP);
+                    projectFile.append(ProjectFile.Options.APPLICATION_MAIN);
+                    projectFile.setMainCodeJDKLOG();
+                    projectFile.append(ProjectFile.Options.REQUEST_HOTSWAP_JDK_8);
+                });
+
+        var buildResult = runner.withArguments("run").build();
+        Assertions.assertTrue(TestUtil.isAgentActive(buildResult));
+    }
+
+    @Test
+    void canProvideJDK11Agent() {
+        var runner = TestUtil.provideTestRunner(
+                projectDir,
+                TestUtil::defaultConfig,
+                settingsFile -> settingsFile.plugin(SettingsFile.Plugins.FOOJAY),
+                projectFile -> {
+                    projectFile.plugin(ProjectFile.Plugins.APPLICATION);
+                    projectFile.plugin(ProjectFile.Plugins.HOTSWAP);
+                    projectFile.append(ProjectFile.Options.REQUEST_HOTSWAP_JDK_11);
+                });
+
+        var buildResult = runner.withArguments("run").build();
+        Assertions.assertTrue(TestUtil.isAgentActive(buildResult));
+    }
+
+    @Test
+    void canProvideJDK17Agent() {
+        var runner = TestUtil.provideTestRunner(
+                projectDir,
+                TestUtil::defaultConfig,
+                settingsFile -> settingsFile.plugin(SettingsFile.Plugins.FOOJAY),
+                projectFile -> {
+                    projectFile.plugin(ProjectFile.Plugins.APPLICATION);
+                    projectFile.plugin(ProjectFile.Plugins.HOTSWAP);
+                    projectFile.append(ProjectFile.Options.REQUEST_HOTSWAP_JDK_17);
+                });
+
+        var buildResult = runner.withArguments("run").build();
+        Assertions.assertTrue(TestUtil.isAgentActive(buildResult));
+    }
+
+    @Test
+    void canProvideJDK21Agent() {
+        var runner = TestUtil.provideTestRunner(
+                projectDir,
+                TestUtil::defaultConfig,
+                settingsFile -> settingsFile.plugin(SettingsFile.Plugins.FOOJAY),
+                projectFile -> {
+                    projectFile.plugin(ProjectFile.Plugins.APPLICATION);
+                    projectFile.plugin(ProjectFile.Plugins.HOTSWAP);
+                    projectFile.append(ProjectFile.Options.REQUEST_HOTSWAP_JDK_21);
+                });
+
+        var buildResult = runner.withArguments("run").build();
+        Assertions.assertTrue(TestUtil.isAgentActive(buildResult));
     }
 }

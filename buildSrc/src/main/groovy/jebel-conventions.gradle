@@ -18,22 +18,25 @@ dependencies {
     testAnnotationProcessor jnaPlatform
 }
 
-tasks.withType(JavaCompile).configureEach {
-    sourceCompatibility = 17 // for the IDE support
-    options.release = 8
-    javaCompiler = javaToolchains.compilerFor {
-        languageVersion = JavaLanguageVersion.of(17)
+afterEvaluate {
+    tasks.withType(JavaCompile).configureEach {
+        sourceCompatibility = 17 // for the IDE support
+        options.release = 8
+        javaCompiler = javaToolchains.compilerFor {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
     }
-}
 
-tasks.withType(Javadoc).configureEach {
-    javadocTool = project.javaToolchains.javadocToolFor {
-        languageVersion = JavaLanguageVersion.of(17)
+    tasks.withType(Javadoc).configureEach {
+        javadocTool = project.javaToolchains.javadocToolFor {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
     }
-}
 
-tasks.withType(Test).configureEach {
-    javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(8)
+    tasks.withType(Test).configureEach {
+        javaLauncher = javaToolchains.launcherFor {
+            languageVersion = JavaLanguageVersion.of(8)
+        }
     }
+
 }

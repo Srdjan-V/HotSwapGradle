@@ -18,6 +18,8 @@ class HotswapGradlePluginTest {
         assertDoesNotThrow(() -> project.getGradle()
                 .getSharedServices()
                 .getRegistrations()
-                .getByName(HotswapGradleService.class.getName()));
+                .getByName(HotswapGradleService.class.getName())
+                .getService()
+                .get());
     }
 }

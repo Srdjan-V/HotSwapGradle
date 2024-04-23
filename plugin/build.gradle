@@ -23,7 +23,7 @@ tasks.withType(Javadoc).configureEach {
 }
 
 dependencies {
-    compileOnly(project(":dcevm-detect"))
+    implementation(project(":dcevm-detect").sourceSets.main.output)
 
     implementation 'org.jetbrains:annotations:24.0.1'
     implementation 'com.google.code.gson:gson:2.10.1'
@@ -60,6 +60,9 @@ sourceSets {
 
 configurations.functionalTestImplementation.extendsFrom(configurations.testImplementation)
 configurations.functionalTestRuntimeOnly.extendsFrom(configurations.testRuntimeOnly)
+
+//jebel
+configurations.functionalTestAnnotationProcessor.extendsFrom(configurations.testAnnotationProcessor)
 
 // Add a task to run the functional tests
 tasks.register('functionalTest', Test) {
