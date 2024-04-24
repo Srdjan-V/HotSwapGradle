@@ -53,6 +53,8 @@ class HotSwapGradlePluginPluginFunctionalTest {
                 projectFile -> {
                     projectFile.plugin(ProjectFile.Plugins.APPLICATION);
                     projectFile.plugin(ProjectFile.Plugins.HOTSWAP);
+                    projectFile.append(ProjectFile.Options.APPLICATION_MAIN);
+                    projectFile.setMainCodeJDKLOG();
                     projectFile.append(ProjectFile.Options.REQUEST_HOTSWAP_JDK_11);
                 });
 
@@ -69,6 +71,8 @@ class HotSwapGradlePluginPluginFunctionalTest {
                 projectFile -> {
                     projectFile.plugin(ProjectFile.Plugins.APPLICATION);
                     projectFile.plugin(ProjectFile.Plugins.HOTSWAP);
+                    projectFile.append(ProjectFile.Options.APPLICATION_MAIN);
+                    projectFile.setMainCodeJDKLOG();
                     projectFile.append(ProjectFile.Options.REQUEST_HOTSWAP_JDK_17);
                 });
 
@@ -85,6 +89,8 @@ class HotSwapGradlePluginPluginFunctionalTest {
                 projectFile -> {
                     projectFile.plugin(ProjectFile.Plugins.APPLICATION);
                     projectFile.plugin(ProjectFile.Plugins.HOTSWAP);
+                    projectFile.append(ProjectFile.Options.APPLICATION_MAIN);
+                    projectFile.setMainCodeJDKLOG();
                     projectFile.append(ProjectFile.Options.REQUEST_HOTSWAP_JDK_21);
                 });
 
