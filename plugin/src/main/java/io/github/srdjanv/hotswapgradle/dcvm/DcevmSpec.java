@@ -6,6 +6,7 @@ import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.jvm.toolchain.JavaToolchainSpec;
+import org.jetbrains.annotations.Nullable;
 
 public interface DcevmSpec extends JavaToolchainSpec {
     /**
@@ -14,7 +15,7 @@ public interface DcevmSpec extends JavaToolchainSpec {
     Property<JavaToolchainSpec> getFallbackSpeck();
 
     /**
-     * Metadata about the used jvm
+     * Metadata about the used jvm, the property can be null if it gets resolved in the known registry
      */
     Property<DcevmMetadata> getDcevmMetadata();
 

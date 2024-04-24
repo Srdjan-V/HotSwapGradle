@@ -15,8 +15,11 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.gradle.api.provider.Provider;
 import org.gradle.jvm.toolchain.JavaLauncher;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LocalJVMRegistry implements ILocalJVMRegistry {
+    private final Logger logger = LoggerFactory.getLogger(LocalJVMRegistry.class);
     private final Lock lock = new ReentrantLock();
     private final ICashedJVMRegistry cashedJVMRegistry;
 
@@ -39,7 +42,10 @@ public class LocalJVMRegistry implements ILocalJVMRegistry {
         lock.lock();
         JavaLauncher javaLauncher = null;
         try {
-            if (!dcevmSpec.getQueryLocalDEVMs().get()) return javaLauncher;
+            if (!dcevmSpec.getQueryLocalDEVMs().get()) {
+                logger.debug("Skipping query of {}, in LocalJVMRegistry", dcevmSpec);
+                return null;
+            }
             var allLocalDcevms = jvmResolver.getAllDcevmToolchains(metadataResolver);
             addToCachedRegistry(allLocalDcevms);
 

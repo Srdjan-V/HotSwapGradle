@@ -7,11 +7,13 @@ import io.github.srdjanv.hotswapgradle.resolver.IDcevmSpecResolver;
 import io.github.srdjanv.hotswapgradle.resolver.ILauncherResolver;
 import io.github.srdjanv.hotswapgradle.suppliers.KnownDcevmSupplier;
 import io.github.srdjanv.hotswapgradle.util.JavaUtil;
+
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
@@ -68,10 +70,16 @@ public class KnownDcevmRegistry implements IKnownDcevmRegistry {
         JavaLauncher javaLauncher = null;
         lock.lock();
         try {
-            if (!dcevmSpec.getQueryKnownDEVMs().get()) return javaLauncher;
+            if (!dcevmSpec.getQueryKnownDEVMs().get()) {
+                logger.debug("Skipping query of {}, in KnownRegistry", dcevmSpec);
+                return null;
+            }
             JavaVersion javaVersion = JavaUtil.versionOf(dcevmSpec);
             List<Action<? super DcevmSpec>> specs = dcevmRegistry.get(javaVersion);
-            if (specs == null || specs.isEmpty()) return javaLauncher;
+            if (specs == null || specs.isEmpty()) {
+                logger.debug("Skipping KnownRegistry query, no DcevmSpec for java version {}. Requested DcevmSpec {}", javaVersion, dcevmSpec);
+                return null;
+            }
 
             Map<Preference, List<Pair<Action<? super DcevmSpec>, DcevmSpec>>> resolvedSpecs = new HashMap<>();
             for (Action<? super DcevmSpec> spec : specs) {
@@ -93,7 +101,7 @@ public class KnownDcevmRegistry implements IKnownDcevmRegistry {
                         specPair.getLeft().execute(dcevmSpec);
                         break topBreak;
                     } catch (GradleException e) {
-                        logger.debug("Failed to resolve DCEVM spec", e);
+                        logger.debug("Failed to resolve DCEVM spec {} in KnownRegistry", dcevmSpec, e);
                     }
                 }
             }
