@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+// todo add an way to test legacy dcevm
 class HotSwapGradlePluginPluginFunctionalTest {
     @TempDir
     File projectDir;

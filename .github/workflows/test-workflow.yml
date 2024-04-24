@@ -6,8 +6,12 @@ on:
       - develop
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  execute:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout develop
         uses: actions/checkout@v4
