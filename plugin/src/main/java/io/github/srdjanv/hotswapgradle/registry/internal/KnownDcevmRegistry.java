@@ -3,15 +3,18 @@ package io.github.srdjanv.hotswapgradle.registry.internal;
 import io.github.srdjanv.hotswapgradle.HotswapGradleService;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmSpec;
 import io.github.srdjanv.hotswapgradle.registry.IKnownDcevmRegistry;
+import io.github.srdjanv.hotswapgradle.resolver.IDcevmMetadataResolver;
 import io.github.srdjanv.hotswapgradle.resolver.IDcevmSpecResolver;
 import io.github.srdjanv.hotswapgradle.resolver.ILauncherResolver;
 import io.github.srdjanv.hotswapgradle.suppliers.KnownDcevmSupplier;
 import io.github.srdjanv.hotswapgradle.util.JavaUtil;
+
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
@@ -64,7 +67,10 @@ public class KnownDcevmRegistry implements IKnownDcevmRegistry {
 
     @Override
     public @Nullable JavaLauncher locateVM(
-            ILauncherResolver launcherResolver, IDcevmSpecResolver specResolver, final DcevmSpec dcevmSpec) {
+            IDcevmMetadataResolver metadataResolver,
+            ILauncherResolver launcherResolver,
+            IDcevmSpecResolver specResolver,
+            final DcevmSpec dcevmSpec) {
         JavaLauncher javaLauncher = null;
         lock.lock();
         try {
@@ -99,9 +105,16 @@ public class KnownDcevmRegistry implements IKnownDcevmRegistry {
                     var resolvedLauncher = launcherResolver.resolveLauncher(specPair.getRight());
                     try {
                         javaLauncher = resolvedLauncher.get();
+                        var metadata = metadataResolver.resolveDcevmMetadata(javaLauncher.getMetadata().getInstallationPath().getAsFile().toPath());
+                        if (!metadata.getIsDcevmPresent().get()) {
+                            logger.debug("Resolved known spec is not an DCEVM, known spec {}", specPair.getRight());
+                            javaLauncher = null;
+                            continue;
+                        }
+                        dcevmSpec.getDcevmMetadata().set(metadata);
                         specPair.getLeft().execute(dcevmSpec);
                         break topBreak;
-                    } catch (GradleException e) {
+                    } catch (Exception e) {
                         logger.debug("Failed to resolve DCEVM spec {} in KnownRegistry", dcevmSpec, e);
                     }
                 }

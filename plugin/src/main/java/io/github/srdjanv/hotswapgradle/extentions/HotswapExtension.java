@@ -4,7 +4,9 @@ import groovy.lang.GroovyObjectSupport;
 import io.github.srdjanv.hotswapgradle.HotswapGradleService;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmSpec;
 import io.github.srdjanv.hotswapgradle.resolver.*;
+
 import javax.inject.Inject;
+
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaBasePlugin;
@@ -66,8 +68,9 @@ public abstract class HotswapExtension extends GroovyObjectSupport {
             var hotswapService = hotswapGradleService.get();
             var dcevmSpec = specResolver.resolveDcevmSpec(hotswapService, spec);
 
-            JavaLauncher javaLauncher =
-                    hotswapService.getKnownDCEVMRegistry().locateVM(launcherResolver, specResolver, dcevmSpec);
+            JavaLauncher javaLauncher = hotswapService
+                    .getKnownDCEVMRegistry()
+                    .locateVM(metadataResolver, launcherResolver, specResolver, dcevmSpec);
             if (javaLauncher == null)
                 javaLauncher = hotswapService
                         .getCashedJVMRegistry()

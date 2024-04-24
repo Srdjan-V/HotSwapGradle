@@ -1,5 +1,6 @@
 package io.github.srdjanv.hotswapgradle.dcvm.internal;
 
+import io.github.srdjanv.hotswapgradle.dcevmdetection.included.IncludedDcevmDetection;
 import io.github.srdjanv.hotswapgradle.dcevmdetection.legacy.LegacyDcevmDetection;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmMetadata;
 import javax.inject.Inject;
@@ -34,8 +35,10 @@ public class DefaultDcevmMetadata implements DcevmMetadata {
         var providerFactory = getProject().getProviders();
         javaInstallationMetadata = providerFactory.provider(() -> new JavaToolchain(
                 jvmToolchainMetadata.metadata, getFileFactory(), new JavaToolchainInput(spec), false));
-        isDcevmPresent = providerFactory.provider(() -> LegacyDcevmDetection.isPresent(
-                javaInstallationMetadata.get().getInstallationPath().getAsFile().toPath()));
+        isDcevmPresent = providerFactory.provider(() -> {
+            var home = javaInstallationMetadata.get().getInstallationPath().getAsFile().toPath();
+            return LegacyDcevmDetection.isPresent(home) || IncludedDcevmDetection.isPresent(home);
+        });
         isDcevmInstalledLikeAltJvm = providerFactory.provider(() -> LegacyDcevmDetection.isInstalledLikeAltJvm(
                 javaInstallationMetadata.get().getInstallationPath().getAsFile().toPath()));
         dcevmVersion = providerFactory.provider(() -> LegacyDcevmDetection.determineDCEVMVersion(

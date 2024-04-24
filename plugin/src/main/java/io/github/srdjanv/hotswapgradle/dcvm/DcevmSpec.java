@@ -14,7 +14,7 @@ public interface DcevmSpec extends JavaToolchainSpec {
     Property<JavaToolchainSpec> getFallbackSpeck();
 
     /**
-     * Metadata about the used jvm, the property can be null if it gets resolved in the known registry
+     * Metadata about the used jvm
      */
     Property<DcevmMetadata> getDcevmMetadata();
 

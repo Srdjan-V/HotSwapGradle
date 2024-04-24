@@ -23,6 +23,7 @@ tasks.withType(Javadoc).configureEach {
 }
 
 dependencies {
+    implementation gradleTestKit()
     implementation(project(":dcevm-detect").sourceSets.main.output)
 
     implementation 'org.jetbrains:annotations:24.0.1'
