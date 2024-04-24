@@ -2,7 +2,7 @@ plugins {
     id("com.diffplug.spotless")
 }
 spotless {
-    ratchetFrom('origin/master')
+    ratchetFrom('origin/develop')
 
     format 'misc', {
         // define the files to apply `misc` to
