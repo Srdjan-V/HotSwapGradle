@@ -32,11 +32,11 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Run tests
-        run: ./gradlew test
+        run: ./gradlew check
 
-      - name: Upload build reports
+      - name: Upload plugin build reports
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: build-reports-${{ matrix.os }}
-          path: build/reports/
+          path: plugin/build/reports/
