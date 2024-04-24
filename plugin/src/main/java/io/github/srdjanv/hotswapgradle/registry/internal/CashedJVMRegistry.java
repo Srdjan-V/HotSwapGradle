@@ -229,7 +229,10 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
 
             var paths = dcevmRegistry.get().get(javaVersion);
             if (paths == null || paths.isEmpty()) {
-                logger.debug("Skipping CachedRegistry query, no paths for java version {}. Requested DcevmSpec {}", javaVersion, dcevmSpec);
+                logger.debug(
+                        "Skipping CachedRegistry query, no paths for java version {}. Requested DcevmSpec {}",
+                        javaVersion,
+                        dcevmSpec);
                 return null;
             }
             for (var path : paths) {
@@ -240,8 +243,11 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
                 }
                 if (iDcevmMetadata != null) dcevmSpec.getDcevmMetadata().set(iDcevmMetadata);
                 var resolvedLauncher = metadataLauncherResolver.resolveLauncher(iDcevmMetadata);
-                if (resolvedLauncher == null)  {
-                    logger.debug("Unable to resolve CachedRegistry launcher for {}, Requested DcevmSpec {}", iDcevmMetadata, dcevmSpec);
+                if (resolvedLauncher == null) {
+                    logger.debug(
+                            "Unable to resolve CachedRegistry launcher for {}, Requested DcevmSpec {}",
+                            iDcevmMetadata,
+                            dcevmSpec);
                     return null;
                 }
                 javaLauncher = resolvedLauncher.get();

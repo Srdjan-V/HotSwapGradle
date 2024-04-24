@@ -6,7 +6,6 @@ import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.jvm.toolchain.JavaToolchainSpec;
-import org.jetbrains.annotations.Nullable;
 
 public interface DcevmSpec extends JavaToolchainSpec {
     /**

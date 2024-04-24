@@ -7,13 +7,11 @@ import io.github.srdjanv.hotswapgradle.resolver.IDcevmSpecResolver;
 import io.github.srdjanv.hotswapgradle.resolver.ILauncherResolver;
 import io.github.srdjanv.hotswapgradle.suppliers.KnownDcevmSupplier;
 import io.github.srdjanv.hotswapgradle.util.JavaUtil;
-
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
@@ -77,7 +75,10 @@ public class KnownDcevmRegistry implements IKnownDcevmRegistry {
             JavaVersion javaVersion = JavaUtil.versionOf(dcevmSpec);
             List<Action<? super DcevmSpec>> specs = dcevmRegistry.get(javaVersion);
             if (specs == null || specs.isEmpty()) {
-                logger.debug("Skipping KnownRegistry query, no DcevmSpec for java version {}. Requested DcevmSpec {}", javaVersion, dcevmSpec);
+                logger.debug(
+                        "Skipping KnownRegistry query, no DcevmSpec for java version {}. Requested DcevmSpec {}",
+                        javaVersion,
+                        dcevmSpec);
                 return null;
             }
 

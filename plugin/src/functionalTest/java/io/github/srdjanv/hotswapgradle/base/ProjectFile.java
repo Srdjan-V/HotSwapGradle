@@ -17,13 +17,15 @@ public class ProjectFile extends BaseConfig {
     }
 
     public void setMainCode(String code) {
-        setMainClass(String.format("""
+        setMainClass(String.format(
+                """
                 public class Main {
                     public static void main(String[] args) {
                         %s
                     }
                 }
-                """, code));
+                """,
+                code));
     }
 
     public void setMainClass(String clazz) {
@@ -47,7 +49,8 @@ public class ProjectFile extends BaseConfig {
     }
 
     public enum Options implements Supplier<String> {
-        APPLICATION_MAIN("""
+        APPLICATION_MAIN(
+                """
                 application {
                     mainClass = 'Main'
                 }
