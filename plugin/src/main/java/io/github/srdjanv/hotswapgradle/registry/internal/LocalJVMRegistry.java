@@ -43,7 +43,7 @@ public class LocalJVMRegistry implements ILocalJVMRegistry {
         JavaLauncher javaLauncher = null;
         try {
             if (!dcevmSpec.getQueryLocalDEVMs().get()) {
-                logger.debug("Skipping query of {}, in LocalJVMRegistry", dcevmSpec);
+                logger.info("Skipping query of {}, in LocalJVMRegistry", dcevmSpec);
                 return null;
             }
             var allLocalDcevms = jvmResolver.getAllDcevmToolchains(metadataResolver);

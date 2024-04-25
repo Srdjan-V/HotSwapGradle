@@ -64,13 +64,13 @@ public class CachedJVMRegistry implements ICachedJVMRegistry {
             try {
                 text = FileIOUtils.loadTextFromFile(registryPath);
             } catch (UncheckedIOException e) {
-                logger.debug("Failed to load registry from {}", registryPath, e);
+                logger.info("Failed to load registry from {}", registryPath, e);
             }
             try {
                 if (text != null)
                     dcevmRegistry = gson.fromJson(text, new TypeToken<Map<JavaVersion, Set<String>>>() {}.getType());
             } catch (JsonParseException exception) {
-                logger.debug("Failed to parse dcevm registry", exception);
+                logger.info("Failed to parse dcevm registry", exception);
             }
 
             if (dcevmRegistry != null) {
@@ -149,9 +149,9 @@ public class CachedJVMRegistry implements ICachedJVMRegistry {
             try {
                 FileIOUtils.saveStringToFile(gson.toJson(data), registryPath);
             } catch (UncheckedIOException exception) {
-                logger.debug("Failed to save registry, path {}", registryPath, exception);
+                logger.info("Failed to save registry, path {}", registryPath, exception);
             } catch (JsonParseException exception) {
-                logger.debug("Failed to parse registry while saving", exception);
+                logger.info("Failed to parse registry while saving", exception);
             }
             regDirty = false;
         } finally {
@@ -212,14 +212,14 @@ public class CachedJVMRegistry implements ICachedJVMRegistry {
         lock.lock();
         try {
             if (!dcevmSpec.getQueryCachedDEVMs().get()) {
-                logger.debug("Skipping query of {}, in CachedRegistry", dcevmSpec);
+                logger.info("Skipping query of {}, in CachedRegistry", dcevmSpec);
                 return null;
             }
             JavaVersion javaVersion = JavaUtil.versionOf(dcevmSpec);
 
             var paths = dcevmRegistry.get().get(javaVersion);
             if (paths == null || paths.isEmpty()) {
-                logger.debug(
+                logger.info(
                         "Skipping CachedRegistry query, no paths for java version {}. Requested DcevmSpec {}",
                         javaVersion,
                         dcevmSpec);
@@ -234,7 +234,7 @@ public class CachedJVMRegistry implements ICachedJVMRegistry {
                 if (iDcevmMetadata != null) dcevmSpec.getDcevmMetadata().set(iDcevmMetadata);
                 var resolvedLauncher = metadataLauncherResolver.resolveLauncher(iDcevmMetadata);
                 if (resolvedLauncher == null) {
-                    logger.debug(
+                    logger.info(
                             "Unable to resolve CachedRegistry launcher for {}, Requested DcevmSpec {}",
                             iDcevmMetadata,
                             dcevmSpec);

@@ -74,7 +74,7 @@ public class HotswapAgentProvider {
     }
 
     public Future<Path> requestAgent(DownloadConfig config) {
-        logger.debug("Requesting agent {}", config);
+        logger.info("Requesting agent {}", config);
         return downloader.submit(() -> {
             GithubApiReleaseSchema releaseSchema = getReleaseSchema(config);
             GithubApiAssetsSchema assetsSchema = getAssetSchema(releaseSchema, config);
@@ -203,7 +203,7 @@ public class HotswapAgentProvider {
             var rawAgents = FileIOUtils.loadTextFromFile(FileUtils.agentVersion(workingDir));
             agents = gson.fromJson(rawAgents, new TypeToken<List<GithubApiReleaseSchema>>() {}.getType());
         } catch (JsonParseException | UncheckedIOException e) {
-            logger.debug("Unable to load agents manifest", e);
+            logger.info("Unable to load agents manifest", e);
         } finally {
             if (agents == null) agents = Collections.emptyList();
         }

@@ -72,13 +72,13 @@ public class KnownDcevmRegistry implements IKnownDcevmRegistry {
         lock.lock();
         try {
             if (!dcevmSpec.getQueryKnownDEVMs().get()) {
-                logger.debug("Skipping query of {}, in KnownRegistry", dcevmSpec);
+                logger.info("Skipping query of {}, in KnownRegistry", dcevmSpec);
                 return null;
             }
             JavaVersion javaVersion = JavaUtil.versionOf(dcevmSpec);
             List<Action<? super DcevmSpec>> specs = dcevmRegistry.get(javaVersion);
             if (specs == null || specs.isEmpty()) {
-                logger.debug(
+                logger.info(
                         "Skipping KnownRegistry query, no DcevmSpec for java version {}. Requested DcevmSpec {}",
                         javaVersion,
                         dcevmSpec);
@@ -108,7 +108,7 @@ public class KnownDcevmRegistry implements IKnownDcevmRegistry {
                                 .getAsFile()
                                 .toPath());
                         if (!metadata.getIsDcevmPresent().get()) {
-                            logger.debug("Resolved known spec is not an DCEVM, known spec {}", specPair.getRight());
+                            logger.info("Resolved known spec is not an DCEVM, known spec {}", specPair.getRight());
                             javaLauncher = null;
                             continue;
                         }
@@ -116,7 +116,7 @@ public class KnownDcevmRegistry implements IKnownDcevmRegistry {
                         specPair.getLeft().execute(dcevmSpec);
                         break topBreak;
                     } catch (Exception e) {
-                        logger.debug("Failed to resolve DCEVM spec {} in KnownRegistry", dcevmSpec, e);
+                        logger.info("Failed to resolve DCEVM spec {} in KnownRegistry", dcevmSpec, e);
                     }
                 }
             }
