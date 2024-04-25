@@ -1,6 +1,7 @@
 package io.github.srdjanv.hotswapgradle.util;
 
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmSpec;
+import io.github.srdjanv.hotswapgradle.extentions.HotswapExtension;
 import org.gradle.api.Action;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
@@ -19,13 +20,16 @@ public class JavaUtil {
     }
 
     public static JavaToolchainService getToolchainService(Project project) {
-       return project.getExtensions().getByType(JavaToolchainService.class);
+        return project.getExtensions().getByType(JavaToolchainService.class);
     }
 
     public static JavaPluginExtension getJavaPluginExtension(Project project) {
         return project.getExtensions().getByType(JavaPluginExtension.class);
     }
 
+    public static HotswapExtension getHotswapExtension(Project project) {
+        return project.getExtensions().getByType(HotswapExtension.class);
+    }
 
     public static JavaVersion versionOf(Provider<JavaLanguageVersion> languageVersion) {
         return versionOf(languageVersion.get());

@@ -1,7 +1,6 @@
 package io.github.srdjanv.hotswapgradle.base;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.function.Consumer;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
@@ -40,6 +39,6 @@ public class TestUtil {
         config.forwardOutput();
         config.withPluginClasspath();
         config.withDebug(true);
-        //config.withEnvironment(Collections.singletonMap(""))
+        // config.withEnvironment(Collections.singletonMap(""))
     }
 }

@@ -54,14 +54,16 @@ public class DefaultDcevmSpec extends DefaultToolchainSpec implements DcevmSpec 
 
         arguments = objectFactory.listProperty(String.class).convention(providerFactory.provider(() -> {
             var meta = getDcevmMetadata().getOrNull();
-            if (meta != null && meta.getIsDcevmInstalledLikeAltJvm().get())
-                return Arrays.asList(
-                        "-XXaltjvm=dcevm",
-                        String.format(
-                                "-javaagent:%s", agentJar.get().getAsFile().getAbsolutePath()));
-
-            return Collections.singletonList(
-                    String.format("-javaagent:%s", agentJar.get().getAsFile().getAbsolutePath()));
+            if (meta != null)
+                if (meta.getIsDcevmInstalledLikeAltJvm().get()) {
+                    return Arrays.asList(
+                            "-XXaltjvm=dcevm",
+                            String.format(
+                                    "-javaagent:%s", agentJar.get().getAsFile().getAbsolutePath()));
+                } else
+                    return Collections.singletonList(String.format(
+                            "-javaagent:%s", agentJar.get().getAsFile().getAbsolutePath()));
+            return Collections.emptyList();
         }));
 
         queryKnownDEVMs = objectFactory.property(Boolean.class).convention(true);

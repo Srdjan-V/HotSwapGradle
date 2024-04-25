@@ -8,16 +8,13 @@ import io.github.srdjanv.hotswapgradle.resolver.IDcevmSpecResolver;
 import io.github.srdjanv.hotswapgradle.resolver.ILauncherResolver;
 import io.github.srdjanv.hotswapgradle.suppliers.KnownDcevmSupplier;
 import io.github.srdjanv.hotswapgradle.util.JavaUtil;
-
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.gradle.api.Action;
-import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
 import org.gradle.jvm.toolchain.JavaLauncher;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +102,11 @@ public class KnownDcevmRegistry implements IKnownDcevmRegistry {
                     var resolvedLauncher = launcherResolver.resolveLauncher(specPair.getRight());
                     try {
                         javaLauncher = resolvedLauncher.get();
-                        var metadata = metadataResolver.resolveDcevmMetadata(javaLauncher.getMetadata().getInstallationPath().getAsFile().toPath());
+                        var metadata = metadataResolver.resolveDcevmMetadata(javaLauncher
+                                .getMetadata()
+                                .getInstallationPath()
+                                .getAsFile()
+                                .toPath());
                         if (!metadata.getIsDcevmPresent().get()) {
                             logger.debug("Resolved known spec is not an DCEVM, known spec {}", specPair.getRight());
                             javaLauncher = null;

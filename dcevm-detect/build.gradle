@@ -7,3 +7,9 @@ plugins {
 
 //Source code
 //https://github.com/dcevm/dcevm/tree/93890b30437f7476824df90f8e9646c391440c31/installer
+
+
+dependencies {
+    implementation "org.ow2.asm:asm:9.7"
+    implementation 'com.google.guava:guava:31.1-jre'
+}

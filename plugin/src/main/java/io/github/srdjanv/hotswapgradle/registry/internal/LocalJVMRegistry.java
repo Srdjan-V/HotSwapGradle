@@ -3,7 +3,7 @@ package io.github.srdjanv.hotswapgradle.registry.internal;
 import io.github.srdjanv.hotswapgradle.HotswapGradleService;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmMetadata;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmSpec;
-import io.github.srdjanv.hotswapgradle.registry.ICashedJVMRegistry;
+import io.github.srdjanv.hotswapgradle.registry.ICachedJVMRegistry;
 import io.github.srdjanv.hotswapgradle.registry.ILocalJVMRegistry;
 import io.github.srdjanv.hotswapgradle.resolver.IDcevmMetadataLauncherResolver;
 import io.github.srdjanv.hotswapgradle.resolver.IDcevmMetadataResolver;
@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 public class LocalJVMRegistry implements ILocalJVMRegistry {
     private final Logger logger = LoggerFactory.getLogger(LocalJVMRegistry.class);
     private final Lock lock = new ReentrantLock();
-    private final ICashedJVMRegistry cashedJVMRegistry;
+    private final ICachedJVMRegistry cashedJVMRegistry;
 
     public LocalJVMRegistry(HotswapGradleService service) {
         this.cashedJVMRegistry = service.getCashedJVMRegistry();

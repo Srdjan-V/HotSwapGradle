@@ -4,9 +4,7 @@ import groovy.lang.GroovyObjectSupport;
 import io.github.srdjanv.hotswapgradle.HotswapGradleService;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmSpec;
 import io.github.srdjanv.hotswapgradle.resolver.*;
-
 import javax.inject.Inject;
-
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaBasePlugin;

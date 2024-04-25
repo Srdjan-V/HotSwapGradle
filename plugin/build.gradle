@@ -25,10 +25,11 @@ tasks.withType(Javadoc).configureEach {
 dependencies {
     implementation gradleTestKit()
     implementation(project(":dcevm-detect").sourceSets.main.output)
+    implementation(project(":dcevm-detect").configurations.implementation.incoming.dependencies)
 
     implementation 'org.jetbrains:annotations:24.0.1'
     implementation 'com.google.code.gson:gson:2.10.1'
-    implementation 'com.google.guava:guava:31.1-jre'
+    //implementation 'com.google.guava:guava:31.1-jre'
 
     implementation "org.apache.httpcomponents:httpclient:4.5.14"
     implementation 'org.apache.commons:commons-lang3:3.14.0'

@@ -1,7 +1,6 @@
 package io.github.srdjanv.hotswapgradle.validator;
 
 import io.github.srdjanv.hotswapgradle.validator.internal.DefaultDcevmValidator;
-
 import java.nio.file.Path;
 
 @FunctionalInterface

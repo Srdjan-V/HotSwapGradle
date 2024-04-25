@@ -1,7 +1,8 @@
 package io.github.srdjanv.hotswapgradle.dcvm.internal;
 
-import io.github.srdjanv.hotswapgradle.dcevmdetection.included.IncludedDcevmDetection;
+import io.github.srdjanv.hotswapgradle.HotswapGradleService;
 import io.github.srdjanv.hotswapgradle.dcevmdetection.legacy.LegacyDcevmDetection;
+import io.github.srdjanv.hotswapgradle.dcevmdetection.probe.ProbeDcevmDetection;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmMetadata;
 import javax.inject.Inject;
 import org.gradle.api.Project;
@@ -14,16 +15,13 @@ import org.gradle.jvm.toolchain.internal.JavaToolchain;
 import org.gradle.jvm.toolchain.internal.JavaToolchainInput;
 
 public class DefaultDcevmMetadata implements DcevmMetadata {
-    private final JvmToolchainMetadata jvmToolchainMetadata;
     private final Provider<JavaInstallationMetadata> javaInstallationMetadata;
     private final Provider<Boolean> isDcevmPresent;
     private final Provider<Boolean> isDcevmInstalledLikeAltJvm;
     private final Provider<String> dcevmVersion;
 
     @Inject
-    public DefaultDcevmMetadata(JvmToolchainMetadata jvmToolchainMetadata) {
-        this.jvmToolchainMetadata = jvmToolchainMetadata;
-
+    public DefaultDcevmMetadata(JvmToolchainMetadata jvmToolchainMetadata, HotswapGradleService service) {
         JavaToolchainSpec spec = new DefaultToolchainSpec(getProject().getObjects());
         spec.getLanguageVersion()
                 .set(JavaLanguageVersion.of(
@@ -36,17 +34,36 @@ public class DefaultDcevmMetadata implements DcevmMetadata {
         javaInstallationMetadata = providerFactory.provider(() -> new JavaToolchain(
                 jvmToolchainMetadata.metadata, getFileFactory(), new JavaToolchainInput(spec), false));
         isDcevmPresent = providerFactory.provider(() -> {
-            var home = javaInstallationMetadata.get().getInstallationPath().getAsFile().toPath();
-            return LegacyDcevmDetection.isPresent(home) || IncludedDcevmDetection.isPresent(home);
+            var home = javaInstallationMetadata
+                    .get()
+                    .getInstallationPath()
+                    .getAsFile()
+                    .toPath();
+            return service.getDcevmValidator().validateDcevm(home);
         });
-        isDcevmInstalledLikeAltJvm = providerFactory.provider(() -> LegacyDcevmDetection.isInstalledLikeAltJvm(
-                javaInstallationMetadata.get().getInstallationPath().getAsFile().toPath()));
-        dcevmVersion = providerFactory.provider(() -> LegacyDcevmDetection.determineDCEVMVersion(
-                javaInstallationMetadata.get().getInstallationPath().getAsFile().toPath()));
-    }
+        isDcevmInstalledLikeAltJvm = providerFactory.provider(() -> isDcevmPresent.get()
+                && LegacyDcevmDetection.isInstalledLikeAltJvm(javaInstallationMetadata
+                        .get()
+                        .getInstallationPath()
+                        .getAsFile()
+                        .toPath()));
+        dcevmVersion = providerFactory.provider(() -> {
+            if (isDcevmPresent.get()) {
+                var intalationPath = javaInstallationMetadata
+                        .get()
+                        .getInstallationPath()
+                        .getAsFile()
+                        .toPath();
 
-    public JvmToolchainMetadata getJvmToolchainMetadata() {
-        return jvmToolchainMetadata;
+                var version = LegacyDcevmDetection.determineDCEVMVersion(intalationPath);
+                if (version.equalsIgnoreCase("NONE")) {
+                    var vmReport = ProbeDcevmDetection.buildReport(intalationPath);
+                    if (vmReport.vmMeta().isPresent())
+                        version = vmReport.vmMeta().get().dcevmVersion();
+                }
+            }
+            return "NONE";
+        });
     }
 
     @Override
