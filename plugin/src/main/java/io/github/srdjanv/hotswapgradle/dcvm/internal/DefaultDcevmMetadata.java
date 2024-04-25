@@ -61,6 +61,7 @@ public class DefaultDcevmMetadata implements DcevmMetadata {
                     if (vmReport.vmMeta().isPresent())
                         version = vmReport.vmMeta().get().dcevmVersion();
                 }
+                return version;
             }
             return "NONE";
         });
