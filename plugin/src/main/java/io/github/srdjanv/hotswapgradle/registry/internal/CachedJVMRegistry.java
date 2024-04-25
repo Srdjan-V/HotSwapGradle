@@ -7,17 +7,15 @@ import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import io.github.srdjanv.hotswapgradle.HotswapGradleService;
 import io.github.srdjanv.hotswapgradle.agent.HotswapAgentProvider;
-import io.github.srdjanv.hotswapgradle.dcevmdetection.legacy.LegacyDcevmDetection;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmMetadata;
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmSpec;
-import io.github.srdjanv.hotswapgradle.registry.ICashedJVMRegistry;
+import io.github.srdjanv.hotswapgradle.registry.ICachedJVMRegistry;
 import io.github.srdjanv.hotswapgradle.resolver.IDcevmMetadataLauncherResolver;
 import io.github.srdjanv.hotswapgradle.resolver.IDcevmMetadataResolver;
 import io.github.srdjanv.hotswapgradle.suppliers.CachedDcevmSupplier;
 import io.github.srdjanv.hotswapgradle.util.FileIOUtils;
 import io.github.srdjanv.hotswapgradle.util.FileUtils;
 import io.github.srdjanv.hotswapgradle.util.JavaUtil;
-import io.github.srdjanv.hotswapgradle.validator.DcevmValidator;
 import java.io.File;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
@@ -28,12 +26,11 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.gradle.api.JavaVersion;
 import org.gradle.jvm.toolchain.JavaLauncher;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CashedJVMRegistry implements ICashedJVMRegistry {
+public class CachedJVMRegistry implements ICachedJVMRegistry {
     private final Logger logger = LoggerFactory.getLogger(HotswapAgentProvider.class);
     private final Lock lock = new ReentrantLock();
     private final HotswapGradleService service;
@@ -42,10 +39,10 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
     private final Map<Path, DcevmMetadata> dcevmMetadataCache = new HashMap<>();
     private final Supplier<Map<JavaVersion, List<Path>>> dcevmRegistry;
     private boolean regDirty = false;
-    private boolean initialized = false;
-    private boolean modified = false;
+    private boolean dcevmRegistryInitialized = false;
+    private boolean metadataCacheDirty = false;
 
-    public CashedJVMRegistry(HotswapGradleService service) {
+    public CachedJVMRegistry(HotswapGradleService service) {
         this.service = service;
 
         var gsonBuilder = new GsonBuilder().enableComplexMapKeySerialization();
@@ -56,6 +53,7 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
                 FileUtils.jdkData(service.getParameters().getWorkingDirectory()).getAsFile();
         dcevmRegistry = Suppliers.memoize(this::initRegistry);
     }
+
     private Map<JavaVersion, List<Path>> initRegistry() {
         lock.lock();
         Map<JavaVersion, List<Path>> resolvedDcevmRegistry = new HashMap<>();
@@ -86,7 +84,7 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
                             .collect(Collectors.toList());
                     resolvedDcevmRegistry.put(javaVersion, dcevmPaths);
                 }
-                initialized = true;
+                dcevmRegistryInitialized = true;
             }
         } finally {
             lock.unlock();
@@ -99,23 +97,23 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
         lock.lock();
         try {
             if (!service.getParameters().getIsCachedRegistryPersistent().get()) return;
-            if (!regDirty && !initialized && !modified) return;
-            Map<JavaVersion, List<String>> data = new HashMap<>();
+            if (!regDirty) return;
+            Map<JavaVersion, Set<String>> data = new HashMap<>();
 
-            if (initialized) {
+            if (dcevmRegistryInitialized) {
                 for (Map.Entry<JavaVersion, List<Path>> entry :
                         dcevmRegistry.get().entrySet()) {
-                    List<String> paths = entry.getValue().stream()
+                    Set<String> paths = entry.getValue().stream()
                             .map(path -> path.normalize().toAbsolutePath())
                             .map(Path::toFile)
                             .map(File::toString)
-                            .collect(Collectors.toList());
+                            .collect(Collectors.toSet());
                     data.put(entry.getKey(), paths);
                 }
             }
 
-            if (modified) {
-                Map<JavaVersion, List<Path>> metaData = dcevmMetadataCache.values().stream()
+            if (metadataCacheDirty) {
+                Map<JavaVersion, Set<Path>> metaData = dcevmMetadataCache.values().stream()
                         .collect(Collectors.groupingBy(
                                 metadata -> JavaUtil.versionOf(metadata.getJavaInstallationMetadata()
                                         .get()
@@ -126,16 +124,16 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
                                                 .getInstallationPath()
                                                 .getAsFile()
                                                 .toPath(),
-                                        Collectors.toList())));
-                for (Map.Entry<JavaVersion, List<Path>> entry : metaData.entrySet()) {
-                    List<String> normalizedPaths = entry.getValue().stream()
+                                        Collectors.toSet())));
+                for (Map.Entry<JavaVersion, Set<Path>> entry : metaData.entrySet()) {
+                    Set<String> normalizedPaths = entry.getValue().stream()
                             .map(path -> path.normalize().toAbsolutePath())
                             .map(Path::toFile)
                             .map(File::toString)
-                            .collect(Collectors.toList());
+                            .collect(Collectors.toSet());
 
                     data.merge(entry.getKey(), normalizedPaths, (path1, path2) -> {
-                        List<String> dataList = new ArrayList<>();
+                        Set<String> dataList = new HashSet<>();
                         dataList.addAll(path1);
                         dataList.addAll(path2);
                         return dataList;
@@ -194,11 +192,11 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
             var javaVersion = JavaUtil.versionOf(javaMetadata.getLanguageVersion());
             var javaHome = javaMetadata.getInstallationPath().getAsFile().toPath();
             dcevmMetadataCache.put(javaHome, metadata);
+            metadataCacheDirty = true;
 
             var reg = dcevmRegistry.get();
             var paths = reg.computeIfAbsent(javaVersion, k -> new ArrayList<>());
             paths.add(javaHome);
-            modified = true;
             regDirty = true;
         } finally {
             lock.unlock();
