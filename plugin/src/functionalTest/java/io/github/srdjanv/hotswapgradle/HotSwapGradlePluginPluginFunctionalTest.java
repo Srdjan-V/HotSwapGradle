@@ -58,7 +58,7 @@ class HotSwapGradlePluginPluginFunctionalTest {
                     projectFile.append(ProjectFile.Options.REQUEST_HOTSWAP_JDK_11);
                 });
 
-        var buildResult = runner.withArguments("run --stacktrace").build();
+        var buildResult = runner.withArguments("run").build();
         Assertions.assertTrue(TestUtil.isAgentActive(buildResult));
     }
 
