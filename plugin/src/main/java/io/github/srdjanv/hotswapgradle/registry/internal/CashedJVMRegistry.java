@@ -39,7 +39,6 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
     private final HotswapGradleService service;
     private final Gson gson;
     public final File registryPath;
-    private DcevmValidator validator;
     private final Map<Path, DcevmMetadata> dcevmMetadataCache = new HashMap<>();
     private final Supplier<Map<JavaVersion, List<Path>>> dcevmRegistry;
     private boolean regDirty = false;
@@ -55,15 +54,8 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
 
         this.registryPath =
                 FileUtils.jdkData(service.getParameters().getWorkingDirectory()).getAsFile();
-        this.validator = LegacyDcevmDetection::isPresent;
         dcevmRegistry = Suppliers.memoize(this::initRegistry);
     }
-
-    @Override
-    public void setValidator(@NotNull DcevmValidator validator) {
-        this.validator = Objects.requireNonNull(validator);
-    }
-
     private Map<JavaVersion, List<Path>> initRegistry() {
         lock.lock();
         Map<JavaVersion, List<Path>> resolvedDcevmRegistry = new HashMap<>();
@@ -90,7 +82,7 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
                     List<Path> dcevmPaths = entry.getValue().stream()
                             .map(File::new)
                             .map(File::toPath)
-                            .filter(validator::validateDcevm)
+                            .filter(service.getDcevmValidator()::validateDcevm)
                             .collect(Collectors.toList());
                     resolvedDcevmRegistry.put(javaVersion, dcevmPaths);
                 }
@@ -175,7 +167,7 @@ public class CashedJVMRegistry implements ICashedJVMRegistry {
         try {
             Set<Path> valid = new HashSet<>();
             for (Path localJvm : cachedDcevmSupplier.getLocalJvms()) {
-                if (validator.validateDcevm(localJvm)) {
+                if (service.getDcevmValidator().validateDcevm(localJvm)) {
                     if (valid.add(localJvm)) {
                         logger.info("Populating CashedJVMRegistry with local jvm {}", localJvm);
                     }

@@ -14,6 +14,4 @@ public interface ICashedJVMRegistry extends ICachedDcevmLocator {
     void populateRegistry(JavaVersion javaVersion,CachedDcevmSupplier cachedDcevmSupplier);
 
     void addToRegistry(DcevmMetadata metadata);
-
-    void setValidator(@NotNull DcevmValidator validator);
 }
