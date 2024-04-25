@@ -9,7 +9,6 @@ import io.github.srdjanv.hotswapgradle.resolver.IDcevmMetadataLauncherResolver;
 import io.github.srdjanv.hotswapgradle.resolver.IDcevmMetadataResolver;
 import io.github.srdjanv.hotswapgradle.resolver.IJVMResolver;
 import io.github.srdjanv.hotswapgradle.resolver.ILauncherResolver;
-import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.gradle.api.provider.Provider;
@@ -27,12 +26,6 @@ public class LocalJVMRegistry implements ILocalJVMRegistry {
         this.cashedJVMRegistry = service.getCashedJVMRegistry();
     }
 
-    private void addToCachedRegistry(List<DcevmMetadata> metadataList) {
-        for (DcevmMetadata metadata : metadataList) {
-            cashedJVMRegistry.addToRegistry(metadata);
-        }
-    }
-
     @Override
     public @Nullable JavaLauncher locateVM(
             IJVMResolver jvmResolver,
@@ -46,17 +39,25 @@ public class LocalJVMRegistry implements ILocalJVMRegistry {
                 logger.info("Skipping query of {}, in LocalJVMRegistry", dcevmSpec);
                 return null;
             }
-            var allLocalDcevms = jvmResolver.getAllDcevmToolchains(metadataResolver);
-            addToCachedRegistry(allLocalDcevms);
+            try {
+                var allLocalDcevms = jvmResolver.getAllDcevmToolchains(metadataResolver);
 
-            Provider<JavaLauncher> javaLauncherProvider;
-            for (DcevmMetadata metadata : allLocalDcevms) {
-                javaLauncherProvider = metadataLauncherResolver.resolveLauncher(metadata);
-                if (javaLauncherProvider != null) {
-                    javaLauncher = javaLauncherProvider.get();
-                    dcevmSpec.getDcevmMetadata().set(metadata);
-                    break;
+                // addToCachedRegistry
+                for (DcevmMetadata metadata : allLocalDcevms) {
+                    cashedJVMRegistry.addToRegistry(metadata);
                 }
+
+                Provider<JavaLauncher> javaLauncherProvider;
+                for (DcevmMetadata metadata : allLocalDcevms) {
+                    javaLauncherProvider = metadataLauncherResolver.resolveLauncher(metadata);
+                    if (javaLauncherProvider != null) {
+                        javaLauncher = javaLauncherProvider.get();
+                        dcevmSpec.getDcevmMetadata().set(metadata);
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                logger.info("Unable query of {}, in LocalJVMRegistry", dcevmSpec, e);
             }
 
             return javaLauncher;
