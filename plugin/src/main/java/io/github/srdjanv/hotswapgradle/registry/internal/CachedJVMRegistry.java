@@ -228,7 +228,7 @@ public class CachedJVMRegistry implements ICachedJVMRegistry {
             for (var path : paths) {
                 var iDcevmMetadata = dcevmMetadataCache.get(path);
                 if (iDcevmMetadata == null) {
-                    iDcevmMetadata = metadataResolver.resolveDcevmMetadata(path);
+                    iDcevmMetadata = service.getDcevmMetadataCacheRegistry().getResolveMetadata(path, metadataResolver);
                     if (iDcevmMetadata != null) addToRegistry(iDcevmMetadata);
                 }
                 if (iDcevmMetadata != null) dcevmSpec.getDcevmMetadata().set(iDcevmMetadata);

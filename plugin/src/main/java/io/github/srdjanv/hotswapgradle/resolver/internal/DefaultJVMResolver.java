@@ -27,7 +27,8 @@ public class DefaultJVMResolver implements IJVMResolver {
         return registry.toolchains().stream()
                 .filter(tool -> tool.metadata.isValidInstallation())
                 .filter(tool -> service.getDcevmValidator().validateDcevm(tool.metadata.getJavaHome()))
-                .map(tool -> metadataResolver.resolveDcevmMetadata(tool.metadata.getJavaHome()))
+                .map(tool -> service.getDcevmMetadataCacheRegistry()
+                        .getResolveMetadata(tool.metadata.getJavaHome(), metadataResolver))
                 .collect(Collectors.toList());
     }
 }

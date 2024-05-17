@@ -102,11 +102,14 @@ public class KnownDcevmRegistry implements IKnownDcevmRegistry {
                     var resolvedLauncher = launcherResolver.resolveLauncher(specPair.getRight());
                     try {
                         javaLauncher = resolvedLauncher.get();
-                        var metadata = metadataResolver.resolveDcevmMetadata(javaLauncher
-                                .getMetadata()
-                                .getInstallationPath()
-                                .getAsFile()
-                                .toPath());
+                        var metadata = service.getDcevmMetadataCacheRegistry()
+                                .getResolveMetadata(
+                                        javaLauncher
+                                                .getMetadata()
+                                                .getInstallationPath()
+                                                .getAsFile()
+                                                .toPath(),
+                                        metadataResolver);
                         if (!metadata.getIsDcevmPresent().get()) {
                             logger.info("Resolved known spec is not an DCEVM, known spec {}", specPair.getRight());
                             javaLauncher = null;
