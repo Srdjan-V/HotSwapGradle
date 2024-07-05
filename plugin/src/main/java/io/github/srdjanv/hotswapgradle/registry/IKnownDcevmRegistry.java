@@ -36,6 +36,7 @@ public interface IKnownDcevmRegistry extends IDcevmLocator {
                         .getArguments()
                         .set(Arrays.asList(
                                 "-XX:+AllowEnhancedClassRedefinition",
+                                "-XX:HotswapAgent=external",
                                 String.format(
                                         "-javaagent:%s",
                                         dcevmSpec
@@ -63,6 +64,7 @@ public interface IKnownDcevmRegistry extends IDcevmLocator {
                             .getArguments()
                             .set(Arrays.asList(
                                     "-XX:+AllowEnhancedClassRedefinition",
+                                    "-XX:HotswapAgent=external",
                                     String.format(
                                             "-javaagent:%s",
                                             dcevmSpec
@@ -81,6 +83,7 @@ public interface IKnownDcevmRegistry extends IDcevmLocator {
                             .getArguments()
                             .convention(Arrays.asList(
                                     "-XX:+AllowEnhancedClassRedefinition",
+                                    "-XX:HotswapAgent=external",
                                     String.format(
                                             "-javaagent:%s",
                                             dcevmSpec
