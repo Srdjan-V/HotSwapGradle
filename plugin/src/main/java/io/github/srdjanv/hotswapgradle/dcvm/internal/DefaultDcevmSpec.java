@@ -17,6 +17,7 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.jvm.toolchain.JavaToolchainSpec;
 import org.gradle.jvm.toolchain.internal.DefaultToolchainSpec;
+import org.jetbrains.annotations.NotNull;
 
 public class DefaultDcevmSpec extends DefaultToolchainSpec implements DcevmSpec {
     private final Property<JavaToolchainSpec> fallbackSpeck;
@@ -119,5 +120,21 @@ public class DefaultDcevmSpec extends DefaultToolchainSpec implements DcevmSpec 
     @Override
     public Property<Boolean> getQueryLocalDEVMs() {
         return queryLocalDEVMs;
+    }
+
+    @Override
+    public @NotNull String toString() {
+        return "DefaultDcevmSpec{" + "JavaToolchainSpec="
+                + super.toString() + ", fallbackSpeck="
+                + fallbackSpeck + ", dcevmMetadataProvider="
+                + dcevmMetadataProvider + ", agentType="
+                + agentType + ", useSnapshot="
+                + useSnapshot + ", gitTagName="
+                + gitTagName + ", agentJar="
+                + agentJar + ", arguments="
+                + arguments + ", queryKnownDEVMs="
+                + queryKnownDEVMs + ", queryCachedDEVMs="
+                + queryCachedDEVMs + ", queryLocalDEVMs="
+                + queryLocalDEVMs + '}';
     }
 }

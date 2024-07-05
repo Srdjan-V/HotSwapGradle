@@ -49,6 +49,11 @@ public class LocalJVMRegistry implements ILocalJVMRegistry {
 
                 Provider<JavaLauncher> javaLauncherProvider;
                 for (DcevmMetadata metadata : allLocalDcevms) {
+                    if (!metadata.getJavaInstallationMetadata()
+                            .get()
+                            .getLanguageVersion()
+                            .equals(dcevmSpec.getLanguageVersion().get())) continue;
+
                     javaLauncherProvider = metadataLauncherResolver.resolveLauncher(metadata);
                     if (javaLauncherProvider != null) {
                         javaLauncher = javaLauncherProvider.get();
