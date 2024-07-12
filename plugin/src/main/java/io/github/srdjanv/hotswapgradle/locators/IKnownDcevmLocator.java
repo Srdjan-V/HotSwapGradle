@@ -7,7 +7,11 @@ import io.github.srdjanv.hotswapgradle.resolver.ILauncherResolver;
 import org.gradle.jvm.toolchain.JavaLauncher;
 import org.jetbrains.annotations.Nullable;
 
-public interface IDcevmLocator {
+/**
+ * Used to locate a known dcevm vm. Example JBR
+ * @see io.github.srdjanv.hotswapgradle.registry.IKnownDcevmRegistry
+ * */
+public interface IKnownDcevmLocator {
     @Nullable
     JavaLauncher locateVM(
             IDcevmMetadataResolver metadataResolver,

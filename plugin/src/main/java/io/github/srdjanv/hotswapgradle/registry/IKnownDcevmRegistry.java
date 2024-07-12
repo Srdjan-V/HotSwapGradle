@@ -1,7 +1,7 @@
 package io.github.srdjanv.hotswapgradle.registry;
 
 import io.github.srdjanv.hotswapgradle.dcvm.DcevmSpec;
-import io.github.srdjanv.hotswapgradle.locators.IDcevmLocator;
+import io.github.srdjanv.hotswapgradle.locators.IKnownDcevmLocator;
 import io.github.srdjanv.hotswapgradle.suppliers.KnownDcevmSupplier;
 import java.util.*;
 import java.util.function.Consumer;
@@ -10,7 +10,7 @@ import org.gradle.api.JavaVersion;
 import org.gradle.jvm.toolchain.JavaLanguageVersion;
 import org.gradle.jvm.toolchain.JvmVendorSpec;
 
-public interface IKnownDcevmRegistry extends IDcevmLocator {
+public interface IKnownDcevmRegistry extends IKnownDcevmLocator {
 
     default void setDefaultRegistry() {
         configureRegistry(Map::clear);

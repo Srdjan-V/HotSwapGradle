@@ -6,10 +6,13 @@ import io.github.srdjanv.hotswapgradle.resolver.IDcevmMetadataResolver;
 import org.gradle.jvm.toolchain.JavaLauncher;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Used to locate a previously resolved dcevm vm
+ * */
 public interface ICachedDcevmLocator {
-    @Nullable JavaLauncher locateVM(
+    @Nullable
+    JavaLauncher locateVM(
             IDcevmMetadataResolver metadataResolver,
             IDcevmMetadataLauncherResolver metadataLauncherResolver,
             DcevmSpec dcevmSpec);
-
 }
