@@ -49,11 +49,13 @@ public class ProbeDcevmDetection {
         String[] split = out.filter(line -> line.startsWith(MARKER_PREFIX))
                 .map(line -> line.substring(MARKER_PREFIX.length()))
                 .toArray(String[]::new);
-        if (split.length != 2)
+        if (split.length != Props.values().length)
             return VMReport.exception(new Exception("Invalid output format: " + Arrays.toString(split)));
 
-        boolean isDcevm = split[Props.VM_NAME.ordinal()].contains("Dynamic Code Evolution");
+        // should be fine to assume all JetBrains vms are dcevm
+        var vmNameMatch = split[Props.VM_NAME.ordinal()].contains("Dynamic Code Evolution");
+        var vmVendorMatch = split[Props.VM_VENDOR.ordinal()].contains("JetBrains");
         String dcevmVersion = split[Props.VM_VERSION.ordinal()];
-        return VMReport.of(new VMMeta(isDcevm, dcevmVersion));
+        return VMReport.of(new VMMeta(vmNameMatch || vmVendorMatch, dcevmVersion));
     }
 }
